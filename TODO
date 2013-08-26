@@ -1,0 +1,10 @@
+Implement Timeouts
+Configuration
+Plugins
+ - Machine Loaders
+ - Pre-Job, Pre-Task, Task-Output, Post-Task, Post-Job
+ - CommandLine Hooks (subcommand?)
+ - Plugin Configuration
+Finish Mimicing most of DSH flags
+Clean Up implementation into class
+Make it easy to call as a library in addition to a CLI tool.
