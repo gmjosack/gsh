@@ -1,0 +1,2 @@
+This directory is not meant to contain a __init__ as we will load these plugins
+the same as user plugins via Annex.

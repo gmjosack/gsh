@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+
+import annex
+import argparse
+import logging
+import os
+import sys
+
+import gsh as _gsh
+from gsh import Gsh
+from gsh.plugin import BaseHostLoader
+
+
+logging.basicConfig()
+
+
+def _create_action(plugin):
+    class _LoaderAction(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            if not getattr(namespace, self.dest, None):
+                setattr(namespace, self.dest, {})
+            loaders = getattr(namespace, self.dest)
+            loaders.setdefault(plugin, []).append(values)
+    return _LoaderAction
+
+
+def _setup_plugin_options(parser, plugins):
+    for plugin in plugins:
+        args = []
+
+        if plugin.opt_short:
+            args.append(plugin.opt_short)
+        if plugin.opt_long:
+            args.append(plugin.opt_long)
+
+        if args and plugin.opt_help and isinstance(plugin.opt_help, basestring):
+            parser.add_argument(
+                *args, default={}, dest="loaders", metavar=plugin.opt_metavar,
+                action=_create_action(plugin), help=plugin.opt_help)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Run a command across many machines.",
+                                     add_help=False)
+    parser.add_argument("command", nargs="*", default=None, help="Command to execute remotely.")
+    parser.add_argument("-t", "--timeout", default=0, type=int, help="How long to allow a command to run before timeout.")
+    parser.add_argument("-F", "--forklimit", default=64, type=int, help="Limit on concurrenct processes.")
+
+    # Do a first pass of parsing where we ignore unknown options so that we can
+    # make use of options which will discover plugins and potentially load more
+    # options.
+    args, unknown = parser.parse_known_args()
+
+    # Delay addition of help so it gets picked up in the second pass of parsing
+    parser.add_argument("-h", "--help", action='help', default=argparse.SUPPRESS,
+                        help="show this help message and exit")
+
+    builtin_plugins_dir = os.path.join(os.path.dirname(_gsh.__file__), "plugins")
+    loader_plugins = annex.Annex(BaseHostLoader, builtin_plugins_dir)
+    loader_group = parser.add_argument_group("loaders", "Host Loaders")
+    _setup_plugin_options(loader_group, loader_plugins)
+
+    args = parser.parse_args()
+    hosts = set()
+    for plugin, options in args.loaders.iteritems():
+        hosts.update(plugin.run(*options))
+
+    if not args.command or not any(args.command):
+        print "\n".join(hosts)
+        sys.exit()
+
+    try:
+        gsh = Gsh(hosts, args.command, fork_limit=args.forklimit, timeout=args.timeout)
+        gsh.run_async()
+        sys.exit(gsh.wait())
+    except KeyboardInterrupt:
+        sys.exit("Bye")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 
-import sys
-
 import gevent
 from gevent.pool import Pool
 from gevent.queue import Queue, Empty
 
 from gevent_subprocess import Popen, PIPE
 
+
 class Error(Exception):
     pass
+
 
 class RemotePopen(object):
 
@@ -93,31 +93,3 @@ class Gsh(object):
                 return remote.rc
         return rc
 
-
-def main():
-    import argparse
-    parser = argparse.ArgumentParser(description="Run a command across many machines.")
-    parser.add_argument("command", nargs="*", default=None, help="Command to execute remotely.")
-    parser.add_argument("-f", "--file", default=[], action="append", help="Use the file as list of machines.")
-    parser.add_argument("-t", "--timeout", default=0, type=int, help="How long to allow a command to run before timeout.")
-    parser.add_argument("-F", "--forklimit", default=64, type=int, help="Limit on concurrenct processes.")
-    args = parser.parse_args()
-
-    hosts = []
-    for host_file in args.file:
-        hosts.extend([line.strip() for line in open(host_file)])
-
-    if not args.command or not any(args.command):
-        print "\n".join(hosts)
-        sys.exit()
-
-    try:
-        gsh = Gsh(hosts, args.command, fork_limit=args.forklimit, timeout=args.timeout)
-        gsh.run_async()
-        sys.exit(gsh.wait())
-    except KeyboardInterrupt:
-        sys.exit("Bye")
-
-
-if __name__ == "__main__":
-    main()
