@@ -22,14 +22,15 @@ class Config(object):
         self.concurrent = True
         self.timeout = 0
         self.plugin_dirs = set()
+        self.hooks = set()
 
     def __repr__(self):
         return (
             "Config(forklimit=%r, print_machines=%r, concurrent=%r, "
-            "timeout=%r, plugin_dirs=%r)"
+            "timeout=%r, plugin_dirs=%r, hooks=%r)"
         ) % (
             self.forklimit, self.print_machines, self.concurrent,
-            self.timeout, self.plugin_dirs
+            self.timeout, self.plugin_dirs, self.hooks
         )
 
     def update_from_file(self, config):
@@ -47,6 +48,11 @@ class Config(object):
                 plugin_dirs = [plugin_dirs]
             self.plugin_dirs.update(plugin_dirs)
 
+            hooks = data.get("hooks", [])
+            if isinstance(hooks, basestring):
+                hooks = [hooks]
+            self.hooks.update(hooks)
+
         # It's okay to ignore files that don't exist.
         except IOError:
             pass
@@ -57,6 +63,7 @@ class Config(object):
     def update_from_args(self, args):
 
         self.plugin_dirs.update(args.plugin_dirs)
+        self.hooks.update(getattr(args, "hooks", []))
 
         if getattr(args, "forklimit", None) is not None:
             self.forklimit = args.forklimit
@@ -68,7 +75,7 @@ class Config(object):
             self.timeout = args.timeout
 
 
-def _create_action(plugin):
+def _create_loader_action(plugin):
     class _LoaderAction(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             if not getattr(namespace, self.dest, None):
@@ -78,7 +85,8 @@ def _create_action(plugin):
     return _LoaderAction
 
 
-def _setup_plugin_options(parser, plugins):
+def _setup_loader_options(parser, plugins):
+    loader_group = parser.add_argument_group("loaders")
     for plugin in plugins:
         args = []
 
@@ -88,12 +96,39 @@ def _setup_plugin_options(parser, plugins):
             args.append(plugin.opt_long)
 
         if args and plugin.opt_help and isinstance(plugin.opt_help, basestring):
-            parser.add_argument(
+            loader_group.add_argument(
                 *args, default={}, dest="loaders", metavar=plugin.opt_metavar,
-                action=_create_action(plugin), help=plugin.opt_help)
+                action=_create_loader_action(plugin), help=plugin.opt_help)
 
 
-def _parse_args(config):
+def _get_specified_hooks(plugins, specified_hooks):
+    hooks = set()
+    for hook in specified_hooks:
+        hook = getattr(plugins, _hook_arg_to_plugin(hook), None)
+        if hook is not None:
+            hooks.add(hook)
+    return hooks
+
+
+def _hook_arg_to_plugin(string):
+    return "%sHook" % string.title().replace("_", "")
+
+
+def _hook_plugin_to_arg(plugin):
+    name = plugin.__class__.__name__
+    new_string = [name[0].lower()]
+    for char in name[1:-4]:
+        if char.isupper():
+            new_string.append("_")
+        new_string.append(char.lower())
+    return "".join(new_string)
+
+
+def main():
+
+    config = Config()
+    config.update_from_file("/etc/gsh/gsh.yaml")
+    config.update_from_file(os.path.expanduser("~/.gsh/gsh.yaml"))
 
     description_msg = "Run a command across many machines."
     parser = argparse.ArgumentParser(description=description_msg, add_help=False)
@@ -137,21 +172,16 @@ def _parse_args(config):
     parser.add_argument("-h", "--help", action='help', default=argparse.SUPPRESS,
                         help="show this help message and exit")
 
-    loader_group = parser.add_argument_group("loaders", "Host Loaders")
-    _setup_plugin_options(loader_group, get_loaders(config.plugin_dirs))
+    hooks = get_hooks(config.plugin_dirs)
+    _setup_loader_options(parser, get_loaders(config.plugin_dirs))
+
+    parser.add_argument("--hooks", default=[], action="append",
+                        help=("Hooks to execute during run-time. Available hooks: %s" %
+                              ", ".join([_hook_plugin_to_arg(hook) for hook in hooks])
+                        ))
 
     args = parser.parse_args()
     config.update_from_args(args)
-
-    return parser, args
-
-def main():
-
-    config = Config()
-    config.update_from_file("/etc/gsh/gsh.yaml")
-    config.update_from_file(os.path.expanduser("~/.gsh/gsh.yaml"))
-
-    parser, args = _parse_args(config)
 
     if args.version:
         print "Gary's Shell / Version: %s" % _gsh.__version__
@@ -170,11 +200,11 @@ def main():
             print "\n".join(hosts)
         sys.exit()
 
-
-    hooks = get_hooks(config.plugin_dirs)
+    specified_hooks = _get_specified_hooks(hooks, config.hooks)
     printer = hooks.PrinterHook
     if config.print_machines:
         printer = hooks.MachinePrinterHook
+    specified_hooks.add(printer)
 
     forklimit = config.forklimit
     if not config.concurrent:
@@ -182,7 +212,7 @@ def main():
 
     try:
         gsh = Gsh(hosts, args.command, fork_limit=forklimit,
-                  timeout=config.timeout, hooks=[printer])
+                  timeout=config.timeout, hooks=specified_hooks)
         gsh.run_async()
         sys.exit(gsh.wait())
     except KeyboardInterrupt:
