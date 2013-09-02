@@ -73,14 +73,18 @@ def _parse_args():
     loader_group = parser.add_argument_group("loaders", "Host Loaders")
     _setup_plugin_options(loader_group, get_loaders())
 
-    return parser.parse_args()
+    return parser, parser.parse_args()
 
 def main():
 
-    args = _parse_args()
+    parser, args = _parse_args()
 
     if args.version:
         print "Gary's Shell / Version: %s" % _gsh.__version__
+        sys.exit()
+
+    if not args.loaders:
+        parser.print_help()
         sys.exit()
 
     hosts = set()
@@ -88,7 +92,8 @@ def main():
         hosts.update(plugin(*options))
 
     if not args.command or not any(args.command):
-        print "\n".join(hosts)
+        if hosts:
+            print "\n".join(hosts)
         sys.exit()
 
     hooks = get_hooks()
