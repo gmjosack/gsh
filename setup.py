@@ -2,9 +2,14 @@
 
 from distutils.core import setup
 
+execfile('gsh/version.py')
+
+with open('requirements.txt') as requirements:
+    required = requirements.read().splitlines()
+
 kwargs = {
     "name": "gsh",
-    "version": "0.1",
+    "version": __version__,
     "packages": ["gsh"],
     "package_data": {"gsh": ["plugins/loaders/*.py", "plugins/hooks/*.py"]},
     "scripts": ["bin/gsh"],
@@ -14,6 +19,7 @@ kwargs = {
     "author_email": "gary@byoteki.com",
     "maintainer_email": "gary@byoteki.com",
     # "license": "",
+    "install_requires": required,
     "url": "https://github.com/gmjosack/gsh",
     "download_url": "https://github.com/gmjosack/gsh/archive/master.tar.gz",
     "classifiers": [

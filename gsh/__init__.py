@@ -3,13 +3,11 @@
 import gevent
 from gevent.pool import Pool
 from gevent.queue import Queue, Empty
-
 from gevent_subprocess import Popen, PIPE
 
+from .version import __version__
 
 __author__ = "Gary M. Josack <gary@byoteki.com>"
-__version__ = 0.1
-
 
 class Error(Exception):
     pass

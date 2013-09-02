@@ -1,3 +1,4 @@
 include README.md
+include requirements.txt
 include gsh/plugins/README
 recursive-include gsh/plugins *.py
