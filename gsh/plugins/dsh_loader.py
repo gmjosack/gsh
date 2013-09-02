@@ -9,7 +9,7 @@ class DshLoader(BaseHostLoader):
     opt_metavar = "GROUP"
     opt_help = "Get a list of machines from a DSH Group."
 
-    def run(self, *args):
+    def __call__(self, *args):
         hosts = set()
         groups = set()
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import annex
 import argparse
 import logging
 import os
@@ -8,7 +7,7 @@ import sys
 
 import gsh as _gsh
 from gsh import Gsh
-from gsh.plugin import BaseHostLoader
+from gsh.plugin import get_loaders
 
 
 logging.basicConfig()
@@ -54,16 +53,13 @@ def main():
     # Delay addition of help so it gets picked up in the second pass of parsing
     parser.add_argument("-h", "--help", action='help', default=argparse.SUPPRESS,
                         help="show this help message and exit")
-
-    builtin_plugins_dir = os.path.join(os.path.dirname(_gsh.__file__), "plugins")
-    loader_plugins = annex.Annex(BaseHostLoader, builtin_plugins_dir)
     loader_group = parser.add_argument_group("loaders", "Host Loaders")
-    _setup_plugin_options(loader_group, loader_plugins)
+    _setup_plugin_options(loader_group, get_loaders())
 
     args = parser.parse_args()
     hosts = set()
     for plugin, options in args.loaders.iteritems():
-        hosts.update(plugin.run(*options))
+        hosts.update(plugin(*options))
 
     if not args.command or not any(args.command):
         print "\n".join(hosts)

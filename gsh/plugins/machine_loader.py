@@ -9,7 +9,7 @@ class MachineLoader(BaseHostLoader):
     opt_metavar = "HOST"
     opt_help = "Execute on the specified machine."
 
-    def run(self, *args):
+    def __call__(self, *args):
         hosts = []
         for machine in args:
             machine = machine.replace(" ", "")

@@ -9,7 +9,7 @@ class FileLoader(BaseHostLoader):
     opt_metavar = "FILE"
     opt_help = "Get a list of machines from the specified file."
 
-    def run(self, *args):
+    def __call__(self, *args):
         hosts = []
         for host_file in args:
             hosts.extend([line.strip() for line in open(host_file)])
