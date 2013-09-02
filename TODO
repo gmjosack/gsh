@@ -1,9 +1,4 @@
 Implement Timeouts
 Configuration
-Plugins
- - Pre-Job, Pre-Task, Task-Output, Post-Task, Post-Job
- - Plugin Configuration
-Finish Mimicing most of DSH flags
-  - wait/concurrent, show/hide-machine-names, remote-shell-opt
-Clean Up implementation into class
-Make it easy to call as a library in addition to a CLI tool.
+Hooks plugin for accumulating output.
+Make use of more hooks callbacks.

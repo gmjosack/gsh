@@ -21,7 +21,7 @@ class BaseHostLoader(object):
         raise NotImplementedError()
 
 
-class BaseExecutionHooks(object):
+class BaseExecutionHook(object):
     def pre_job(self):
         pass
 
@@ -34,17 +34,21 @@ class BaseExecutionHooks(object):
     def post_host(self):
         pass
 
-    def update_host(self):
+    def update_host(self, hostname, stream, line):
         pass
 
 
 def get_loaders(additional_dirs=None):
     if additional_dirs is None:
         additional_dirs = []
-    return annex.Annex(BaseHostLoader, BUILTIN_PLUGIN_DIR, additional_dirs)
+    return annex.Annex(BaseHostLoader,
+                       os.path.join(BUILTIN_PLUGIN_DIR, "loaders"),
+                       additional_dirs)
 
 
 def get_hooks(additional_dirs=None):
     if additional_dirs is None:
         additional_dirs = []
-    return annex.Annex(BaseExecutionHooks, BUILTIN_PLUGIN_DIR, additional_dirs)
+    return annex.Annex(BaseExecutionHook,
+                       os.path.join(BUILTIN_PLUGIN_DIR, "hooks"),
+                       additional_dirs)

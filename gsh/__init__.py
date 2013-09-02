@@ -7,6 +7,10 @@ from gevent.queue import Queue, Empty
 from gevent_subprocess import Popen, PIPE
 
 
+__author__ = "Gary M. Josack <gary@byoteki.com>"
+__version__ = 0.1
+
+
 class Error(Exception):
     pass
 
@@ -18,10 +22,13 @@ class RemotePopen(object):
     FAILED = 2
     SUCCESS = 3
 
-    def __init__(self, hostname, command, timeout=None):
+    def __init__(self, hostname, command, timeout=None, hooks=None):
         self.hostname = hostname
         self.command = command
         self.timeout = timeout
+
+        if hooks is None: hooks = []
+        self.hooks = hooks
 
         self.status = RemotePopen.QUEUED
         self.rc = None
@@ -34,8 +41,7 @@ class RemotePopen(object):
         for line in iter(fd.readline, b""):
             queue.put_nowait((fd, line))
 
-    @staticmethod
-    def consume(queue, hostname, names):
+    def consume(self, queue, hostname, names):
         while True:
             try:
                 output = queue.get()
@@ -47,7 +53,8 @@ class RemotePopen(object):
                 return
 
             fd, line = output
-            print "%s(%s): %s" % (hostname, names[fd], line),
+            for hook in self.hooks:
+                hook.update_host(hostname, names[fd], line)
 
     def run(self):
         self.status = RemotePopen.RUNNING
@@ -69,11 +76,14 @@ class RemotePopen(object):
 
 
 class Gsh(object):
-    def __init__(self, hosts, command, fork_limit=1, timeout=None):
+    def __init__(self, hosts, command, fork_limit=1, timeout=None, hooks=None):
         self.hosts = set(hosts)
         self.command = command
         self.fork_limit = fork_limit
         self.timeout = timeout
+
+        if hooks is None: hooks = []
+        self.hooks = hooks
 
         self._pool = Pool(max(self.fork_limit, 1))
         self._greenlets = []
@@ -81,7 +91,7 @@ class Gsh(object):
 
     def run_async(self):
         for host in self.hosts:
-            remote_command = RemotePopen(host, self.command)
+            remote_command = RemotePopen(host, self.command, hooks=self.hooks)
             self._remotes.append(remote_command)
             self._greenlets.append(self._pool.apply_async(remote_command.run))
 
