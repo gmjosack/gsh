@@ -37,6 +37,8 @@ class Config(object):
         try:
             with open(config) as config_file:
                 data = yaml.safe_load(config_file)
+                if data is None:
+                    data = {}
 
             self.forklimit = data.get("forklimit", self.forklimit)
             self.print_machines = data.get("print_machines", self.print_machines)
@@ -147,7 +149,7 @@ def main():
                         help="Command to execute remotely.")
     parser.add_argument("-t", "--timeout", default=None, type=int,
                         help="How long to allow a command to run before timeout.")
-    parser.add_argument("-F", "--forklimit", default=None, type=int,
+    parser.add_argument("-F", "--forklimit", default=None,
                         help="Limit on concurrenct processes.")
 
     parser.add_argument("-M", "--show-machine-names", dest="print_machines",

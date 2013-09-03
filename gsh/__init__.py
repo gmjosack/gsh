@@ -77,7 +77,7 @@ class Gsh(object):
     def __init__(self, hosts, command, fork_limit=1, timeout=None, hooks=None):
         self.hosts = set(hosts)
         self.command = command
-        self.fork_limit = fork_limit
+        self.fork_limit = self._build_fork_limit(fork_limit, len(self.hosts))
         self.timeout = timeout
 
         if hooks is None: hooks = []
@@ -86,6 +86,15 @@ class Gsh(object):
         self._pool = Pool(max(self.fork_limit, 1))
         self._greenlets = []
         self._remotes = []
+
+    @staticmethod
+    def _build_fork_limit(fork_limit, num_hosts):
+        if isinstance(fork_limit, int) or fork_limit.isdigit():
+            return int(fork_limit)
+        if fork_limit.endswith("%"):
+            return int(float(num_hosts) * (float(fork_limit[:-1]) / 100.0))
+        # If we can't parse your forklimit go serial for safety.
+        return 1
 
     def run_async(self):
         for host in self.hosts:
