@@ -9,7 +9,7 @@ with open('requirements.txt') as requirements:
 
 kwargs = {
     "name": "gsh",
-    "version": __version__,
+    "version": str(__version__),
     "packages": ["gsh"],
     "package_data": {"gsh": ["plugins/loaders/*.py", "plugins/hooks/*.py"]},
     "scripts": ["bin/gsh"],
