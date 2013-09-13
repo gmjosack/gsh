@@ -25,6 +25,10 @@ class RemotePopen(object):
         self.command = command
         self.timeout = timeout
 
+        # Treat 0 second timeouts as no timeout.
+        if not timeout:
+            self.timeout = None
+
         if hooks is None: hooks = []
         self.hooks = hooks
 
@@ -67,9 +71,18 @@ class RemotePopen(object):
         err_worker = gevent.spawn(self.stream_fd, self._proc.stderr, self._output_queue)
         consumer = gevent.spawn(self.consume, self._output_queue, self.hostname, names)
 
-        gevent.joinall([out_worker, err_worker])
+        gevent.joinall([out_worker, err_worker], timeout=self.timeout)
+
+        # If we've made it here and the process hasn't completed we've timed out.
+        if self._proc.poll() is None:
+            self._output_queue.put_nowait(
+                (self._proc.stderr, "GSH: command timed out after %d second(s).\n" % self.timeout))
+            self._proc.kill()
+
         self._output_queue.put_nowait(None)
         consumer.join()
+
+
         self.rc = self._proc.wait()
 
 
@@ -79,6 +92,10 @@ class Gsh(object):
         self.command = command
         self.fork_limit = self._build_fork_limit(fork_limit, len(self.hosts))
         self.timeout = timeout
+
+        # Treat 0 second timeouts as no timeout.
+        if not timeout:
+            self.timeout = None
 
         if hooks is None: hooks = []
         self.hooks = hooks
@@ -98,7 +115,7 @@ class Gsh(object):
 
     def run_async(self):
         for host in self.hosts:
-            remote_command = RemotePopen(host, self.command, hooks=self.hooks)
+            remote_command = RemotePopen(host, self.command, hooks=self.hooks, timeout=self.timeout)
             self._remotes.append(remote_command)
             self._greenlets.append(self._pool.apply_async(remote_command.run))
 
