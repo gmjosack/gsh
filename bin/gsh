@@ -6,75 +6,10 @@ import os
 import sys
 import yaml
 
-import gsh as _gsh
 from gsh import Gsh
+from gsh import __version__
 from gsh.plugin import get_loaders, get_hooks
-
-
-class Error(Exception):
-    pass
-
-
-class Config(object):
-    def __init__(self):
-        self.forklimit = 64
-        self.print_machines = True
-        self.concurrent = True
-        self.timeout = 0
-        self.plugin_dirs = set()
-        self.hooks = set()
-
-    def __repr__(self):
-        return (
-            "Config(forklimit=%r, print_machines=%r, concurrent=%r, "
-            "timeout=%r, plugin_dirs=%r, hooks=%r)"
-        ) % (
-            self.forklimit, self.print_machines, self.concurrent,
-            self.timeout, self.plugin_dirs, self.hooks
-        )
-
-    def update_from_file(self, config):
-        try:
-            with open(config) as config_file:
-                data = yaml.safe_load(config_file)
-                if data is None:
-                    data = {}
-
-            self.forklimit = data.get("forklimit", self.forklimit)
-            self.print_machines = data.get("print_machines", self.print_machines)
-            self.concurrent = data.get("concurrent", self.concurrent)
-            self.timeout = data.get("timeout", self.timeout)
-
-            plugin_dirs = data.get("plugin_dirs", [])
-            if isinstance(plugin_dirs, basestring):
-                plugin_dirs = [plugin_dirs]
-            self.plugin_dirs.update(plugin_dirs)
-
-            hooks = data.get("hooks", [])
-            if isinstance(hooks, basestring):
-                hooks = [hooks]
-            self.hooks.update(hooks)
-
-        # It's okay to ignore files that don't exist.
-        except IOError:
-            pass
-        except yaml.parser.ParserError as err:
-            raise Error("Invalid Configuration (%s): %s" % (config, err.problem))
-
-
-    def update_from_args(self, args):
-
-        self.plugin_dirs.update(args.plugin_dirs)
-        self.hooks.update(getattr(args, "hooks", []))
-
-        if getattr(args, "forklimit", None) is not None:
-            self.forklimit = args.forklimit
-        if getattr(args, "print_machines", None) is not None:
-            self.print_machines = args.print_machines
-        if getattr(args, "concurrent", None) is not None:
-            self.concurrent = args.concurrent
-        if getattr(args, "timeout", None) is not None:
-            self.timeout = args.timeout
+from gsh.config import Config
 
 
 def _create_loader_action(plugin):
@@ -129,8 +64,7 @@ def _hook_plugin_to_arg(plugin):
 def main():
 
     config = Config()
-    config.update_from_file("/etc/gsh/gsh.yaml")
-    config.update_from_file(os.path.expanduser("~/.gsh/gsh.yaml"))
+    config.load_default_files()
 
     description_msg = "Run a command across many machines."
     parser = argparse.ArgumentParser(description=description_msg, add_help=False)
@@ -186,7 +120,7 @@ def main():
     config.update_from_args(args)
 
     if args.version:
-        print "Gary's Shell / Version: %s" % _gsh.__version__
+        print "Gary's Shell / Version: %s" % __version__
         sys.exit()
 
     if not args.loaders:

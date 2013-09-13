@@ -9,9 +9,6 @@ from .version import __version__
 
 __author__ = "Gary M. Josack <gary@byoteki.com>"
 
-class Error(Exception):
-    pass
-
 
 class RemotePopen(object):
 
