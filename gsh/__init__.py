@@ -89,7 +89,7 @@ class RemotePopen(object):
         # If we've made it here and the process hasn't completed we've timed out.
         if self._proc.poll() is None:
             self._output_queue.put_nowait(
-                (self._proc.stderr, "GSH: command timed out after %d second(s).\n" % self.timeout))
+                (self._proc.stderr, "GSH: command timed out after %s second(s).\n" % self.timeout))
             self._proc.kill()
 
         self.rc = self._proc.wait()
