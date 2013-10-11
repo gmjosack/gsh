@@ -4,6 +4,7 @@ import gevent
 from gevent.pool import Pool
 from gevent.queue import Queue, Empty
 from gevent_subprocess import Popen, PIPE
+import time
 
 from .version import __version__
 
@@ -76,11 +77,15 @@ class RemotePopen(object):
                 (self._proc.stderr, "GSH: command timed out after %d second(s).\n" % self.timeout))
             self._proc.kill()
 
+        self.rc = self._proc.wait()
+
+        if not self.rc:
+            self.status = RemotePopen.SUCCESS
+        else:
+            self.status = RemotePopen.FAILED
+
         self._output_queue.put_nowait(None)
         consumer.join()
-
-
-        self.rc = self._proc.wait()
 
 
 class Gsh(object):
@@ -101,6 +106,10 @@ class Gsh(object):
         self._greenlets = []
         self._remotes = []
 
+        self._pre_hook = None
+        self._post_hook = None
+
+
     @staticmethod
     def _build_fork_limit(fork_limit, num_hosts):
         if isinstance(fork_limit, int) or fork_limit.isdigit():
@@ -111,14 +120,31 @@ class Gsh(object):
         return 1
 
     def run_async(self):
+
+        # Don't start executing until the pre_job hooks have completed.
+        self._pre_hook = gevent.spawn(self._run_pre_job_hooks)
+        self._pre_hook.join()
+
         for host in self.hosts:
             remote_command = RemotePopen(host, self.command, hooks=self.hooks, timeout=self.timeout)
             self._remotes.append(remote_command)
             self._greenlets.append(self._pool.apply_async(remote_command.run))
 
+        self._post_hook = gevent.spawn(self._run_post_job_hooks)
+
+    def _run_pre_job_hooks(self):
+        for hook in self.hooks:
+            hook.pre_job(self.command, self.hosts, time.time())
+
+    def _run_post_job_hooks(self):
+        # Wait for all greenlets to finish before running these hooks.
+        gevent.joinall(self._greenlets)
+        for hook in self.hooks:
+            hook.post_job(time.time())
+
     def wait(self, timeout=None):
         rc = 0
-        gevent.joinall(self._greenlets, timeout=timeout, raise_error=True)
+        gevent.joinall(self._greenlets + [self._post_hook], timeout=timeout, raise_error=True)
         for remote in self._remotes:
             if remote.rc:
                 return remote.rc

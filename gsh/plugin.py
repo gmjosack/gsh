@@ -22,10 +22,10 @@ class BaseHostLoader(object):
 
 
 class BaseExecutionHook(object):
-    def pre_job(self):
+    def pre_job(self, command, hosts, ts):
         pass
 
-    def post_job(self):
+    def post_job(self, ts):
         pass
 
     def pre_host(self):
