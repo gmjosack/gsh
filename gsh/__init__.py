@@ -37,6 +37,17 @@ class RemotePopen(object):
         self._output_queue = Queue()
         self._proc = None
 
+        self._pre_host_hooks = None
+        self._post_host_hooks = None
+
+    def _run_pre_host_hooks(self):
+        for hook in self.hooks:
+            hook.pre_host(self.hostname, time.time())
+
+    def _run_post_host_hooks(self):
+        for hook in self.hooks:
+            hook.post_host(self.hostname, time.time())
+
     @staticmethod
     def stream_fd(fd, queue):
         for line in iter(fd.readline, b""):
@@ -58,6 +69,9 @@ class RemotePopen(object):
                 hook.update_host(hostname, names[fd], line)
 
     def run(self):
+        self._pre_host_hooks = gevent.spawn(self._run_pre_host_hooks)
+        self._pre_host_hooks.join()
+
         self.status = RemotePopen.RUNNING
         self._proc = Popen(["ssh", self.hostname] + self.command, stdout=PIPE, stderr=PIPE)
 
@@ -85,6 +99,9 @@ class RemotePopen(object):
         else:
             self.status = RemotePopen.FAILED
 
+        self._post_host_hooks = gevent.spawn(self._run_post_host_hooks)
+        self._post_host_hooks.join()
+
         self._output_queue.put_nowait(None)
         consumer.join()
 
@@ -108,8 +125,8 @@ class Gsh(object):
         self._greenlets = []
         self._remotes = []
 
-        self._pre_hook = None
-        self._post_hook = None
+        self._pre_job_hooks = None
+        self._post_job_hooks = None
 
     @staticmethod
     def _build_fork_limit(fork_limit, num_hosts):
@@ -123,15 +140,15 @@ class Gsh(object):
     def run_async(self):
 
         # Don't start executing until the pre_job hooks have completed.
-        self._pre_hook = gevent.spawn(self._run_pre_job_hooks)
-        self._pre_hook.join()
+        self._pre_job_hooks = gevent.spawn(self._run_pre_job_hooks)
+        self._pre_job_hooks.join()
 
         for host in self.hosts:
             remote_command = RemotePopen(host, self.command, hooks=self.hooks, timeout=self.timeout)
             self._remotes.append(remote_command)
             self._greenlets.append(self._pool.apply_async(remote_command.run))
 
-        self._post_hook = gevent.spawn(self._run_post_job_hooks)
+        self._post_job_hooks = gevent.spawn(self._run_post_job_hooks)
 
     def _run_pre_job_hooks(self):
         for hook in self.hooks:
@@ -145,7 +162,7 @@ class Gsh(object):
 
     def wait(self, timeout=None):
         rc = 0
-        gevent.joinall(self._greenlets + [self._post_hook], timeout=timeout, raise_error=True)
+        gevent.joinall(self._greenlets + [self._post_job_hooks], timeout=timeout, raise_error=True)
         for remote in self._remotes:
             if remote.rc:
                 return remote.rc
