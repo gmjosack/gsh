@@ -27,7 +27,8 @@ class RemotePopen(object):
         if not timeout:
             self.timeout = None
 
-        if hooks is None: hooks = []
+        if hooks is None:
+            hooks = []
         self.hooks = hooks
 
         self.status = RemotePopen.QUEUED
@@ -99,7 +100,8 @@ class Gsh(object):
         if not timeout:
             self.timeout = None
 
-        if hooks is None: hooks = []
+        if hooks is None:
+            hooks = []
         self.hooks = hooks
 
         self._pool = Pool(max(self.fork_limit, 1))
@@ -108,7 +110,6 @@ class Gsh(object):
 
         self._pre_hook = None
         self._post_hook = None
-
 
     @staticmethod
     def _build_fork_limit(fork_limit, num_hosts):
@@ -149,4 +150,3 @@ class Gsh(object):
             if remote.rc:
                 return remote.rc
         return rc
-

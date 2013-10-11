@@ -2,9 +2,7 @@
 
 import argparse
 import logging
-import os
 import sys
-import yaml
 
 from gsh import Gsh
 from gsh import __version__

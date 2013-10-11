@@ -53,7 +53,6 @@ class Config(object):
         except (yaml.parser.ParserError, yaml.scanner.ScannerError) as err:
             raise ConfigError("Invalid Configuration (%s): %s" % (config, err.problem))
 
-
     def update_from_args(self, args):
 
         self.plugin_dirs.update(args.plugin_dirs)
@@ -71,4 +70,3 @@ class Config(object):
     def load_default_files(self):
         self.update_from_file("/etc/gsh/gsh.yaml")
         self.update_from_file(os.path.expanduser("~/.gsh/gsh.yaml"))
-
