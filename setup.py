@@ -18,7 +18,7 @@ kwargs = {
     "maintainer": "Gary M. Josack",
     "author_email": "gary@byoteki.com",
     "maintainer_email": "gary@byoteki.com",
-    # "license": "",
+    "license": "MIT",
     "install_requires": required,
     "url": "https://github.com/gmjosack/gsh",
     "download_url": "https://github.com/gmjosack/gsh/archive/master.tar.gz",
