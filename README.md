@@ -13,9 +13,57 @@ changes will be backwards compatible at this time.
 
 ### Installation
 
+New versions will be updated to PyPI pretty regularly so it should be as easy
+as:
+
+```bash
+pip install gsh
+```
+
 ### Configuration
 
+Many of the default configuration options can be overridden with a
+configuration file. Configuration is currently specified as a YAML
+document. The following is what the default configuration would
+look like:
+
+```yaml
+forklimit: 64
+print_machines: true
+concurrent: true
+timeout: null
+plugin_dirs: [ ]
+hooks: []
+```
+
+Configuration files are read from the following locations, being overridden
+in the order they are read:
+
+ * _/etc/gsh/gsh.yaml_
+ * _~/.gsh/gsh.yaml_
+
 ### Group Files
+
+One of the default host loaders (-g) allows you to specify group files by name.
+Group files contain a newline delimited list of hosts with an option user@
+specified. This loader will search for these files in the following locations
+
+ * _~/.gsh/group_
+ * _~/.dsh/group_
+ * _/etc/gsh/group_
+ * _/etc/dsh/group_
+
+The first group file found will win. The loader will not continue searching
+through all paths. An example group that might be accessed when a user
+types the command __gsh -g test_hosts uptime__ would be:
+
+_/etc/gsh/group/test_hosts_
+```bash
+test_host1.example.com
+test_host2.example.com
+# Users can be specified. Also comments are ignored.
+roleaccount@test_host2.example.com
+```
 
 ### Plugins
 
