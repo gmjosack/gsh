@@ -1,2 +1,5 @@
-Hooks plugin for accumulating output.
-Make use of more hooks callbacks.
+Annex instantiates hooks before you get them so they are effectively
+singletons. This makes having hooks that gather output/stats not particularly
+useful to be loaded by Annex. Currently you can get around this by
+Instantiating your own plugin and passing it into Hooks but I should enable
+a way to return some kind of response object via the hooks system.
