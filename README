@@ -51,7 +51,7 @@ Group Files
 
 One of the default host loaders (-g) allows you to specify group files
 by name. Group files contain a newline delimited list of hosts with an
-option user@ specified. This loader will search for these files in the
+optional user@ specified. This loader will search for these files in the
 following locations
 
 -  *~/.gsh/group*
@@ -65,6 +65,10 @@ when a user types the command **gsh -g test\_hosts uptime** would be:
 
 */etc/gsh/group/test\_hosts*
 ``bash test_host1.example.com test_host2.example.com # Users can be specified. Also comments are ignored. roleaccount@test_host2.example.com``
+
+This same file format is usable for the file (-f) loader, though you
+must specify the full path. This loader is more suited to operating over
+ad hoc built lists of machines.
 
 Plugins
 ~~~~~~~
@@ -116,7 +120,7 @@ writing annoying wrapper scripts. GSH allows you to specify the fork
 limit as a percentage. e.g. gsh -g mobileweb -F 20% "/etc/init.d/nginx
 restart"
 
-**ps utput is cleaner / less forking madness.**
+**ps output is cleaner / less forking madness.**
 
 While this may seem like a silly thing to list as an improvement, it has
 sufficiently improved my quality of life. In DSH you saw 3 forks for

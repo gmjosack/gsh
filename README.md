@@ -45,7 +45,7 @@ in the order they are read:
 ### Group Files
 
 One of the default host loaders (-g) allows you to specify group files by name.
-Group files contain a newline delimited list of hosts with an option user@
+Group files contain a newline delimited list of hosts with an optional user@
 specified. This loader will search for these files in the following locations
 
  * _~/.gsh/group_
@@ -64,6 +64,10 @@ test_host2.example.com
 # Users can be specified. Also comments are ignored.
 roleaccount@test_host2.example.com
 ```
+
+This same file format is usable for the file (-f) loader, though you must
+specify the full path. This loader is more suited to operating over
+ad hoc built lists of machines.
 
 ### Plugins
 
@@ -110,7 +114,7 @@ GSH allows you to specify the fork limit as a percentage.
 e.g. gsh -g mobileweb -F 20% "/etc/init.d/nginx restart"
 
 
-__ps utput is cleaner / less forking madness.__
+__ps output is cleaner / less forking madness.__
 
 While this may seem like a silly thing to list as an improvement, it has
 sufficiently improved my quality of life. In DSH you saw 3 forks for each
