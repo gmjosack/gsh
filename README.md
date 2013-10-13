@@ -112,7 +112,7 @@ personal or system configuration files, however no option exists to
 eliminate this limit.
 
 
-# F.A.Q.
+### F.A.Q.
 __What the hell does GSH stand for?__
 
 GSH stand's for Gary's Shell. Mostly just because I didn't know what to call
