@@ -1,4 +1,4 @@
-
+""" Exception related objects and helpers."""
 
 class Error(Exception):
     """ Base Error for all gsh exceptions."""

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+""" Command-line interface to using GSH."""
+
 import argparse
 import logging
 import sys
@@ -11,7 +13,9 @@ from gsh.config import Config
 
 
 def _create_loader_action(plugin):
+    """ Used to pass a plugin into a custom Action via a closure."""
     class _LoaderAction(argparse.Action):
+        """ Custom Action for argparse to grab loaders by name."""
         def __call__(self, parser, namespace, values, option_string=None):
             if not getattr(namespace, self.dest, None):
                 setattr(namespace, self.dest, {})
@@ -21,6 +25,7 @@ def _create_loader_action(plugin):
 
 
 def _setup_loader_options(parser, plugins):
+    """ Dynamically add options based on what loaders exist."""
     loader_group = parser.add_argument_group("loaders")
     for plugin in plugins:
         args = []
@@ -37,6 +42,16 @@ def _setup_loader_options(parser, plugins):
 
 
 def _get_specified_hooks(plugins, specified_hooks):
+    """ Given a list of specified hook names, return a set of hooks.
+
+    Args:
+        plugins: An iterable of available hook type plugins.
+        specified_hooks: An interable of hook names in argument form.
+
+    Returns:
+        A set of hooks that were specified.
+
+    """
     hooks = set()
     for hook in specified_hooks:
         hook = getattr(plugins, _hook_arg_to_plugin(hook), None)
@@ -46,10 +61,12 @@ def _get_specified_hooks(plugins, specified_hooks):
 
 
 def _hook_arg_to_plugin(string):
+    """ Transforms hook name from argument form to plugin form."""
     return "%sHook" % string.title().replace("_", "")
 
 
 def _hook_plugin_to_arg(plugin):
+    """ Returns a hook argument name from a hook plugin."""
     name = plugin.__class__.__name__
     new_string = [name[0].lower()]
     for char in name[1:-4]:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+""" Configuation related objects and helpers."""
 
 import os
 import yaml
@@ -7,6 +7,23 @@ from .exceptions import ConfigError
 
 
 class Config(object):
+    """ Configuration object for GSH.
+
+    This object is used as the canonical source for options in GSH. This
+    allows for easily setting defaults and having them overridden from
+    multiple sources, such as configuration files, arguments on the command
+    line and potentially environment variables. This is mostly used for the
+    the command line utility.
+
+    Attributes:
+        forklimit: The number of concurrent processes to fork at a time.
+        print_machines: Whether to prefix output with machine names.
+        concurrent: Whether to perform operation sequentially vs concurrently.
+        timeout: How long to wait for a command to finish on a host.
+        plugin_dirs: Where to look for addition plugins.
+        hooks: Which hooks to pass through to Gsh.
+
+    """
 
     def __init__(self):
         self.forklimit = 64
@@ -26,6 +43,7 @@ class Config(object):
         )
 
     def update_from_file(self, config):
+        """ Updates the configuration attributes from a file."""
         try:
             with open(config) as config_file:
                 data = yaml.safe_load(config_file)
@@ -33,7 +51,8 @@ class Config(object):
                     data = {}
 
             self.forklimit = data.get("forklimit", self.forklimit)
-            self.print_machines = data.get("print_machines", self.print_machines)
+            self.print_machines = data.get("print_machines",
+                                           self.print_machines)
             self.concurrent = data.get("concurrent", self.concurrent)
             self.timeout = data.get("timeout", self.timeout)
 
@@ -51,9 +70,11 @@ class Config(object):
         except IOError:
             pass
         except (yaml.parser.ParserError, yaml.scanner.ScannerError) as err:
-            raise ConfigError("Invalid Configuration (%s): %s" % (config, err.problem))
+            raise ConfigError(
+                "Invalid Configuration (%s): %s" % (config, err.problem))
 
     def update_from_args(self, args):
+        """ Update config object from an argparse args object."""
 
         self.plugin_dirs.update(args.plugin_dirs)
         self.hooks.update(getattr(args, "hooks", []))
@@ -68,5 +89,6 @@ class Config(object):
             self.timeout = args.timeout
 
     def load_default_files(self):
+        """ Update config object from standard config file locations."""
         self.update_from_file("/etc/gsh/gsh.yaml")
         self.update_from_file(os.path.expanduser("~/.gsh/gsh.yaml"))

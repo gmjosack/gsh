@@ -68,11 +68,12 @@ class BaseExecutionHook(object):
                 line: The line of output streamed from the host.
         """
 
-    def post_host(self, hostname, timestamp):
+    def post_host(self, hostname, return_code, timestamp):
         """ Called for each host, after a host has finished executing a command.
 
             Args:
                 hostname: The host we're about to run a command on.
+                return_code: The exitcode received from the remote command.
                 timestamp: A Unix timestamp when this hook was run.
         """
 

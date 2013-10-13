@@ -14,6 +14,9 @@ kwargs = {
     "package_data": {"gsh": ["plugins/loaders/*.py", "plugins/hooks/*.py"]},
     "scripts": ["bin/gsh"],
     "description": "Pluggable Distributed SSH Command Executer.",
+    # PyPi, despite not parsing markdown, will prefer the README.md to the
+    # standard README. Explicitly read it here.
+    "long_description": open("README").read(),
     "author": "Gary M. Josack",
     "maintainer": "Gary M. Josack",
     "author_email": "gary@byoteki.com",

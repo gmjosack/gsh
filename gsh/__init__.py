@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 import gevent
 from gevent.pool import Pool
@@ -7,8 +6,40 @@ from gevent_subprocess import Popen, PIPE
 import time
 
 from .version import __version__
+from .plugin import BaseExecutionHook
 
 __author__ = "Gary M. Josack <gary@byoteki.com>"
+
+
+class BufferedOutput(BaseExecutionHook):
+    """ Hook to capture output from a RemotePopen call."""
+    def __init__(self):
+        self.stdout = []
+        self.stderr = []
+        self.rc = None
+
+    def update_host(self, hostname, stream, line):
+        if stream not in ("stdout", "stderr"):
+            return
+        getattr(self, stream).append(line)
+
+    def post_host(self, hostname, rc, timestamp):
+        self.rc = rc
+
+
+class MultiBufferedOutput(BaseExecutionHook):
+    """ Hook to gather output from all hosts on a Gsh call."""
+    def __init__(self):
+        self.hosts = {}
+
+    def pre_host(self, hostname, timestamp):
+        self.hosts[hostname] = BufferedOutput()
+
+    def update_host(self, hostname, *args, **kwargs):
+        self.hosts[hostname].update_host(hostname, *args, **kwargs)
+
+    def post_host(self, hostname, *args, **kwargs):
+        self.hosts[hostname].post_host(hostname, *args, **kwargs)
 
 
 class RemotePopen(object):
@@ -46,14 +77,14 @@ class RemotePopen(object):
 
     def _run_post_host_hooks(self):
         for hook in self.hooks:
-            hook.post_host(self.hostname, time.time())
+            hook.post_host(self.hostname, self.rc, time.time())
 
     @staticmethod
-    def stream_fd(fd, queue):
+    def _stream_fd(fd, queue):
         for line in iter(fd.readline, b""):
             queue.put_nowait((fd, line))
 
-    def consume(self, queue, hostname, names):
+    def _consume(self, queue, hostname, names):
         while True:
             try:
                 output = queue.get()
@@ -80,9 +111,9 @@ class RemotePopen(object):
             self._proc.stderr: "stderr",
         }
 
-        out_worker = gevent.spawn(self.stream_fd, self._proc.stdout, self._output_queue)
-        err_worker = gevent.spawn(self.stream_fd, self._proc.stderr, self._output_queue)
-        consumer = gevent.spawn(self.consume, self._output_queue, self.hostname, names)
+        out_worker = gevent.spawn(self._stream_fd, self._proc.stdout, self._output_queue)
+        err_worker = gevent.spawn(self._stream_fd, self._proc.stderr, self._output_queue)
+        consumer = gevent.spawn(self._consume, self._output_queue, self.hostname, names)
 
         gevent.joinall([out_worker, err_worker], timeout=self.timeout)
 
