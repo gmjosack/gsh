@@ -7,9 +7,15 @@ a module and a command-line tool for running a shell command over multiple
 machines are included. GSH can be extended by adding new host loaders as well
 as hooking into various stages of the runtime.
 
+While I plan to keep the api stable for the command line, the module's interface
+and plugin interfaces are still potentially evolving and I can't guarantee all
+changes will be backwards compatible at this time.
+
 ### Installation
 
 ### Configuration
+
+### Group Files
 
 ### Plugins
 
@@ -36,7 +42,7 @@ waiting on network I/O, I consider this a fair tradeoff.
 Besides the loaders and hooks mentioned in other sections, GSH provides a few
 general benefits over DSH.
 
-_Specifying a loader option (-m/-g/etc) without a command will list the hosts._
+__Specifying a loader option (-m/-g/etc) without a command will list the hosts.__
 
 Many times I'd like to just see which hosts are in a group. As I added new host
 loaders for dynamically building host lists this became a more common desire.
@@ -45,7 +51,7 @@ and exit. GSH will print the list of machines that would be be used in the
 absense of a command.
 
 
-_The fork limit (-F) can be specified as a percentage._
+__The fork limit (-F) can be specified as a percentage.__
 
 Often times you'll end up scripting rolling restarts of services over various
 groups of hosts. You might end up specifying a fork limit of 24 forgetting one
@@ -56,7 +62,7 @@ GSH allows you to specify the fork limit as a percentage.
 e.g. gsh -g mobileweb -F 20% "/etc/init.d/nginx restart"
 
 
-_ps output is cleaner / less forking madness._
+__ps utput is cleaner / less forking madness.__
 
 While this may seem like a silly thing to list as an improvement, it has
 sufficiently improved my quality of life. In DSH you saw 3 forks for each
@@ -85,7 +91,7 @@ bash
      \_ ssh test_host2 uptime
 ```
 
-_timeouts!_
+__Timeouts!__
 
 Speaking of having to know which processes to kill when they've hung... GSH
 provides a timeout option. While setting your SSH connection timeout is nice,
@@ -93,6 +99,17 @@ sometimes the command just hangs indefinitely and you want to get your shell
 back. The -t option of gsh will timeout long running processes after the
 specified allotment of time. Be careful with this though as it will kill you
 command ungracefully (-9).
+
+__Concurrency improvements.__
+
+DSH had this weird issue where it couldn't do a fork limit of 1. It would
+always have one more host than you has specified. This is a behavior I
+did not replicate. A fork limit of 1 is now synonymous with serial execution
+mode. In addition to this change I have instituted a default fork limit of 64.
+DSH would gladly kill your machine by default by forking way too many
+processes. This limit can be overridden on the command line or in your
+personal or system configuration files, however no option exists to
+eliminate this limit.
 
 
 # F.A.Q.
