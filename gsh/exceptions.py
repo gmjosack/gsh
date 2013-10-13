@@ -6,3 +6,6 @@ class Error(Exception):
 
 class ConfigError(Error):
     """ Error parsing configuration."""
+
+class LoaderError(Error):
+    """ Error loading hosts from loader plugin."""
