@@ -32,7 +32,7 @@ forklimit: 64
 print_machines: true
 concurrent: true
 timeout: null
-plugin_dirs: [ ]
+plugin_dirs: []
 hooks: []
 ```
 
@@ -71,9 +71,49 @@ ad hoc built lists of machines.
 
 ### Plugins
 
+Plugins are the main reason I set out to create GSH. At my last job we created
+DSH replacement that specifically worked with our machine database. Now I'm
+faced with that same decision for querying our machine database directly.
+In addition to just host loaders, I also want to be able to log the commands.
+This is where hooks come in.
+
 ##### Loaders
 
+Loaders are plugins that allow you to build host lists from arbitrary
+arguments. The should be stored in a specified plugin_dirs location or
+the default location of _/etc/gsh/plugins/loaders_. The base class,
+_BaseHostLoader_ in _gsh.plugin_, as well as the builtin plugins located in
+_gsh/plugins/loaders_ in the package itself, are the best way to go about
+learning how to add loaders.
+
+As an example, I currently use a machine database that provides a nice
+set arithmetic syntax. The following example shows how easy it is to add this
+to GSH:
+
+```Python
+from mdbset import mdbset
+
+class MdbSetLoader(BaseHostLoader):
+    opt_short = "-q"
+
+    def __call__(self, *args):
+        return mdbset(*args)
+```
+
+Now we can simply do the following to get a list of all nginx boxes that
+aren't serving mobile using:
+
+```bash
+gsh -q "nginx -nginx-mobile"
+```
+
+While the code for the loader does wave over error handling, it really is that
+simple to extend GSH to provide additional host loading mechanics.
+
 ##### Hooks
+
+/etc/gsh/plugins/hooks
+
 
 ### Rationale
 
