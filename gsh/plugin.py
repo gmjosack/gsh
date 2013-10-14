@@ -89,17 +89,19 @@ def get_loaders(additional_dirs=None):
     """ Helper function to find and load all loaders. """
     if additional_dirs is None:
         additional_dirs = []
-    return annex.Annex(BaseHostLoader,
-                       os.path.join(BUILTIN_PLUGIN_DIR, "loaders"),
-                       "/etc/gsh/plugins/loaders",
-                       *[os.path.join(plugin_dir, "loaders") for plugin_dir in additional_dirs])
+    return annex.Annex(BaseHostLoader, [
+        os.path.join(BUILTIN_PLUGIN_DIR, "loaders"),
+        "/etc/gsh/plugins/loaders",
+        [os.path.join(plugin_dir, "loaders") for plugin_dir in additional_dirs]
+    ])
 
 
 def get_hooks(additional_dirs=None):
     """ Helper function to find and load all hooks. """
     if additional_dirs is None:
         additional_dirs = []
-    return annex.Annex(BaseExecutionHook,
-                       os.path.join(BUILTIN_PLUGIN_DIR, "hooks"),
-                       "/etc/gsh/plugins/hooks",
-                       *[os.path.join(plugin_dir, "hooks") for plugin_dir in additional_dirs])
+    return annex.Annex(BaseExecutionHook, [
+        os.path.join(BUILTIN_PLUGIN_DIR, "hooks"),
+        "/etc/gsh/plugins/hooks",
+        [os.path.join(plugin_dir, "hooks") for plugin_dir in additional_dirs]
+    ], instantiate=False)

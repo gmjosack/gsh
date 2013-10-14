@@ -1,5 +1,5 @@
 PyYAML
-annex==0.1
+annex==0.2
 argparse==1.2.1
 gevent==0.13.8
 gevent-subprocess==0.1.1

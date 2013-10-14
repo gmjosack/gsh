@@ -80,11 +80,11 @@ This is where hooks come in.
 ##### Loaders
 
 Loaders are plugins that allow you to build host lists from arbitrary
-arguments. The should be stored in a specified plugin_dirs location or
+arguments. They should be stored in a specified plugin_dirs location or
 the default location of _/etc/gsh/plugins/loaders_. The base class,
 _BaseHostLoader_ in _gsh.plugin_, as well as the builtin plugins located in
 _gsh/plugins/loaders_ in the package itself, are the best way to go about
-learning how to add loaders.
+learning how to add new loaders.
 
 As an example, I currently use a machine database that provides a nice
 set arithmetic syntax. The following example shows how easy it is to add this
@@ -112,7 +112,16 @@ simple to extend GSH to provide additional host loading mechanics.
 
 ##### Hooks
 
-/etc/gsh/plugins/hooks
+The initial concept for hooks came when I wanted to log the various aspects of
+DSH to my real-time event logging framework. This was difficult with DSH as
+I had to parse various aspects of out the output and not all data was easily
+exposed.
+
+As with loaders, they should be stored in a specified plugin_dirs location or
+the default location of _/etc/gsh/plugins/hooks_. The base class,
+_BaseExecutionHook_ in _gsh.plugin_, as well as the builtin plugins located in
+_gsh/plugins/hooks_ in the package itself, are the best way to go about
+learning how to add new hooks.
 
 
 ### Rationale

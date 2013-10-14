@@ -67,7 +67,7 @@ def _hook_arg_to_plugin(string):
 
 def _hook_plugin_to_arg(plugin):
     """ Returns a hook argument name from a hook plugin."""
-    name = plugin.__class__.__name__
+    name = plugin.__name__
     new_string = [name[0].lower()]
     for char in name[1:-4]:
         if char.isupper():
@@ -156,6 +156,7 @@ def main():
     if config.print_machines:
         printer = hooks.MachinePrinterHook
     specified_hooks.add(printer)
+    specified_hooks = [hook() for hook in specified_hooks]
 
     forklimit = config.forklimit
     if not config.concurrent:
