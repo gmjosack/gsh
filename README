@@ -23,6 +23,20 @@ easy as:
 
     pip install gsh
 
+Examples
+~~~~~~~~
+
+::
+
+    # Run uptime across all nginx machines
+    gsh -g nginx uptime
+
+    # Restart nginx serially
+    gsh -wg nginx sudo /etc/init.d/nginx restart
+
+    # Run w across three manual machines.
+    gsh -m host1,host2 -m host3 w
+
 Configuration
 ~~~~~~~~~~~~~
 

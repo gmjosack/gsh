@@ -20,6 +20,19 @@ as:
 pip install gsh
 ```
 
+### Examples
+
+```bash
+# Run uptime across all nginx machines
+gsh -g nginx uptime
+
+# Restart nginx serially
+gsh -wg nginx sudo /etc/init.d/nginx restart
+
+# Run w across three manual machines.
+gsh -m host1,host2 -m host3 w
+```
+
 ### Configuration
 
 Many of the default configuration options can be overridden with a
