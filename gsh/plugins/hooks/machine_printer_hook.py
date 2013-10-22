@@ -8,5 +8,6 @@ class MachinePrinterHook(BaseExecutionHook):
             return
         writer = getattr(sys, stream)
         writer.write("%s: %s" % (hostname, line))
+        writer.flush()
 
 

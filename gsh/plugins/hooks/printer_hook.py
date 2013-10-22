@@ -8,5 +8,6 @@ class PrinterHook(BaseExecutionHook):
             return
         writer = getattr(sys, stream)
         writer.write(line)
+        writer.flush()
 
 

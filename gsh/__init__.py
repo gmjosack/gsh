@@ -81,9 +81,10 @@ class RemotePopen(object):
 
         out_worker = gevent.spawn(self._stream_fd, self._proc.stdout, self._output_queue)
         err_worker = gevent.spawn(self._stream_fd, self._proc.stderr, self._output_queue)
+        waiter = gevent.spawn(self._proc.wait)
         consumer = gevent.spawn(self._consume, self._output_queue, self.hostname, names)
 
-        gevent.joinall([out_worker, err_worker], timeout=self.timeout)
+        gevent.joinall([out_worker, err_worker, waiter], timeout=self.timeout)
 
         # If we've made it here and the process hasn't completed we've timed out.
         if self._proc.poll() is None:
