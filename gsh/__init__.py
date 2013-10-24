@@ -72,7 +72,7 @@ class RemotePopen(object):
         self._pre_host_hooks.join()
 
         self.status = RemotePopen.RUNNING
-        self._proc = Popen(["ssh", self.hostname] + self.command, stdout=PIPE, stderr=PIPE)
+        self._proc = Popen(["ssh", "-o", "PasswordAuthentication=no", self.hostname] + self.command, stdout=PIPE, stderr=PIPE)
 
         names = {
             self._proc.stdout: "stdout",
