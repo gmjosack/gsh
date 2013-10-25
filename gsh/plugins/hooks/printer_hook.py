@@ -6,6 +6,7 @@ def update_host_handler(hostname, stream, line, prepend_host=False):
         if stream not in ("stdout", "stderr"):
             return
         writer = getattr(sys, stream)
+        line = line.decode('utf-8')
         if prepend_host:
             line = "%s: %s" % (hostname, line)
         try:
