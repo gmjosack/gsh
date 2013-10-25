@@ -16,7 +16,7 @@ GROUP_FILE_LOCATIONS = (
     "/etc/dsh/group",
 )
 
-VALID_GROUPNAME = re.compile(r"^[\w\-]*$")
+VALID_GROUPNAME = re.compile(r"^[\w\-=]*$")
 
 
 class GshLoader(BaseHostLoader):
