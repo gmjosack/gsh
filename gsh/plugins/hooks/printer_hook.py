@@ -11,7 +11,8 @@ class PrinterHook(BaseExecutionHook):
 
     def pre_job(self, command, hosts, timestamp):
         # Add one to account for :
-        self.longest_len = len(max(hosts, key=len)) + 1
+        if hosts:
+            self.longest_len = len(max(hosts, key=len)) + 1
 
     def update_host(self, hostname, stream, line):
         if stream not in ("stdout", "stderr"):
