@@ -43,6 +43,7 @@ look like:
 ```yaml
 forklimit: 64
 print_machines: true
+show_percent: false
 concurrent: true
 timeout: null
 plugin_dirs: []
