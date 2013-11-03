@@ -18,6 +18,7 @@ class Config(object):
     Attributes:
         forklimit: The number of concurrent processes to fork at a time.
         print_machines: Whether to prefix output with machine names.
+        show_percent: Whether to prefix output with percentage of completion.
         concurrent: Whether to perform operation sequentially vs concurrently.
         timeout: How long to wait for a command to finish on a host.
         plugin_dirs: Where to look for addition plugins.
@@ -28,6 +29,7 @@ class Config(object):
     def __init__(self):
         self.forklimit = 64
         self.print_machines = True
+        self.show_percent = False
         self.concurrent = True
         self.timeout = 0
         self.plugin_dirs = set()
@@ -35,11 +37,11 @@ class Config(object):
 
     def __repr__(self):
         return (
-            "Config(forklimit=%r, print_machines=%r, concurrent=%r, "
-            "timeout=%r, plugin_dirs=%r, hooks=%r)"
+            "Config(forklimit=%r, print_machines=%r, show_percent=%r, "
+            "concurrent=%r, timeout=%r, plugin_dirs=%r, hooks=%r)"
         ) % (
-            self.forklimit, self.print_machines, self.concurrent,
-            self.timeout, self.plugin_dirs, self.hooks
+            self.forklimit, self.print_machines, self.show_percent,
+            self.concurrent, self.timeout, self.plugin_dirs, self.hooks
         )
 
     def update_from_file(self, config):
@@ -53,6 +55,8 @@ class Config(object):
             self.forklimit = data.get("forklimit", self.forklimit)
             self.print_machines = data.get("print_machines",
                                            self.print_machines)
+            self.show_percent = data.get("show_percent",
+                                           self.show_percent)
             self.concurrent = data.get("concurrent", self.concurrent)
             self.timeout = data.get("timeout", self.timeout)
 
@@ -83,6 +87,8 @@ class Config(object):
             self.forklimit = args.forklimit
         if getattr(args, "print_machines", None) is not None:
             self.print_machines = args.print_machines
+        if getattr(args, "show_percent", None) is not None:
+            self.show_percent = args.show_percent
         if getattr(args, "concurrent", None) is not None:
             self.concurrent = args.concurrent
         if getattr(args, "timeout", None) is not None:

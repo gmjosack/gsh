@@ -108,6 +108,15 @@ def main():
                         action="store_false", default=None,
                         help="Do not prepend hostname to output.")
 
+
+    parser.add_argument("--show-percent", dest="show_percent",
+                        action="store_true", default=None,
+                        help="Prepend percent complete to output.")
+    parser.add_argument("--hide-percent", dest="show_percent",
+                        action="store_false", default=None,
+                        help="Do not prepend percent complete to output.")
+
+
     parser.add_argument("-c", "--concurrent-shell", dest="concurrent",
                         action="store_true", default=None,
                         help="Execute commands concurrently.")
@@ -152,11 +161,14 @@ def main():
         sys.exit()
 
     specified_hooks = _get_specified_hooks(hooks, config.hooks)
-    printer = hooks.PrinterHook
-    if config.print_machines:
-        printer = hooks.MachinePrinterHook
-    specified_hooks.add(printer)
     specified_hooks = [hook() for hook in specified_hooks]
+
+    printer_config = {
+        "prepend_host": config.print_machines,
+        "show_percent": config.show_percent,
+    }
+
+    specified_hooks.append(hooks.PrinterHook(**printer_config))
 
     forklimit = config.forklimit
     if not config.concurrent:
