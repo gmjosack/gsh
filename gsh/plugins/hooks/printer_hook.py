@@ -8,6 +8,7 @@ class PrinterHook(BaseExecutionHook):
     def __init__(self, *args, **kwargs):
         self.prepend_host = kwargs.pop("prepend_host", True)
         self.show_percent = kwargs.pop("show_percent", False)
+        self.add_newline = kwargs.pop("add_newline", True)
 
         self.hosts_total = 0
         self.hosts_finished = 0
@@ -45,6 +46,9 @@ class PrinterHook(BaseExecutionHook):
 
         if self.show_percent:
             line = "(%3s%%) %s" % (self.hosts_percent, line)
+
+        if self.add_newline and line and line[-1] != "\n":
+            line += "\n"
 
         stream.write(line)
         stream.flush()
