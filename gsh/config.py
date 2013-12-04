@@ -23,6 +23,7 @@ class Config(object):
         timeout: How long to wait for a command to finish on a host.
         plugin_dirs: Where to look for addition plugins.
         hooks: Which hooks to pass through to Gsh.
+        executor: Which executor to run the commands with.
 
     """
 
@@ -34,14 +35,15 @@ class Config(object):
         self.timeout = 0
         self.plugin_dirs = set()
         self.hooks = set()
+        self.executor = "ssh"
 
     def __repr__(self):
         return (
             "Config(forklimit=%r, print_machines=%r, show_percent=%r, "
-            "concurrent=%r, timeout=%r, plugin_dirs=%r, hooks=%r)"
+            "concurrent=%r, timeout=%r, plugin_dirs=%r, hooks=%r, executor=%r)"
         ) % (
             self.forklimit, self.print_machines, self.show_percent,
-            self.concurrent, self.timeout, self.plugin_dirs, self.hooks
+            self.concurrent, self.timeout, self.plugin_dirs, self.hooks, self.executor,
         )
 
     def update_from_file(self, config):
@@ -59,6 +61,7 @@ class Config(object):
                                            self.show_percent)
             self.concurrent = data.get("concurrent", self.concurrent)
             self.timeout = data.get("timeout", self.timeout)
+            self.executor = data.get("executor", self.executor)
 
             plugin_dirs = data.get("plugin_dirs", [])
             if isinstance(plugin_dirs, basestring):
@@ -93,6 +96,8 @@ class Config(object):
             self.concurrent = args.concurrent
         if getattr(args, "timeout", None) is not None:
             self.timeout = args.timeout
+        if getattr(args, "executor", None) is not None:
+            self.executor = args.executor
 
     def load_default_files(self):
         """ Update config object from standard config file locations."""

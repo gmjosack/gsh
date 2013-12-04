@@ -8,7 +8,7 @@ import sys
 
 from gsh import Gsh
 from gsh import __version__
-from gsh.plugin import get_loaders, get_hooks
+from gsh.plugin import get_loaders, get_hooks, get_executors
 from gsh.config import Config
 
 
@@ -54,22 +54,22 @@ def _get_specified_hooks(plugins, specified_hooks):
     """
     hooks = set()
     for hook in specified_hooks:
-        hook = getattr(plugins, _hook_arg_to_plugin(hook), None)
+        hook = getattr(plugins, _arg_to_plugin(hook, "Hook"), None)
         if hook is not None:
             hooks.add(hook)
     return hooks
 
 
-def _hook_arg_to_plugin(string):
-    """ Transforms hook name from argument form to plugin form."""
-    return "%sHook" % string.title().replace("_", "")
+def _arg_to_plugin(string, suffix):
+    """ Transforms name from argument form to plugin form."""
+    return "%s%s" % (string.title().replace("_", ""), suffix)
 
 
-def _hook_plugin_to_arg(plugin):
-    """ Returns a hook argument name from a hook plugin."""
+def _plugin_to_arg(plugin, suffix):
+    """ Returns an argument name from a plugin."""
     name = plugin.__name__
     new_string = [name[0].lower()]
-    for char in name[1:-4]:
+    for char in name[1:-len(suffix)]:
         if char.isupper():
             new_string.append("_")
         new_string.append(char.lower())
@@ -132,12 +132,18 @@ def main():
     parser.add_argument("-h", "--help", action='help', default=argparse.SUPPRESS,
                         help="show this help message and exit")
 
-    hooks = get_hooks(config.plugin_dirs)
     _setup_loader_options(parser, get_loaders(config.plugin_dirs))
 
+    hooks = get_hooks(config.plugin_dirs)
     parser.add_argument("--hooks", default=[], action="append",
                         help=("Hooks to execute during run-time. Available hooks: %s" %
-                              ", ".join([_hook_plugin_to_arg(hook) for hook in hooks])
+                              ", ".join([_plugin_to_arg(hook, "Hook") for hook in hooks])
+                        ))
+
+    executors = get_executors(config.plugin_dirs)
+    parser.add_argument("-e", "--executor", default=None,
+                        help=("Which execution plugin to use: Available executors: %s" %
+                              ", ".join([_plugin_to_arg(executor, "Executor") for executor in executors])
                         ))
 
     args = parser.parse_args()
@@ -183,9 +189,12 @@ def main():
     if not config.concurrent:
         forklimit = 1
 
+    executor = getattr(executors, _arg_to_plugin(config.executor, "Executor"))
+
     try:
         gsh = Gsh(hosts, command, fork_limit=forklimit,
-                  timeout=config.timeout, hooks=specified_hooks)
+                  timeout=config.timeout, hooks=specified_hooks,
+                  executor=executor)
         gsh.run_async()
         sys.exit(gsh.wait())
     except KeyboardInterrupt:

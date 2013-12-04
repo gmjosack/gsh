@@ -85,6 +85,22 @@ class BaseExecutionHook(object):
         """
 
 
+class BaseExecutor(object):
+    pass
+
+class BaseInnerExecutor(object):
+
+    def __init__(self, parent, hostname, command, timeout, update_cb):
+        self.parent = parent
+        self.hostname = hostname
+        self.command = command
+        self.timeout = timeout
+        self.update = update_cb
+
+    def run(self):
+        return 0
+
+
 def get_loaders(additional_dirs=None):
     """ Helper function to find and load all loaders. """
     if additional_dirs is None:
@@ -104,4 +120,15 @@ def get_hooks(additional_dirs=None):
         os.path.join(BUILTIN_PLUGIN_DIR, "hooks"),
         "/etc/gsh/plugins/hooks",
         [os.path.join(plugin_dir, "hooks") for plugin_dir in additional_dirs]
+    ], instantiate=False)
+
+
+def get_executors(additional_dirs=None):
+    """ Helper function to find and load all executors. """
+    if additional_dirs is None:
+        additional_dirs = []
+    return annex.Annex(BaseExecutor, [
+        os.path.join(BUILTIN_PLUGIN_DIR, "executors"),
+        "/etc/gsh/plugins/executors",
+        [os.path.join(plugin_dir, "executors") for plugin_dir in additional_dirs]
     ], instantiate=False)
