@@ -11,7 +11,11 @@ kwargs = {
     "name": "gsh",
     "version": str(__version__),
     "packages": ["gsh"],
-    "package_data": {"gsh": ["plugins/loaders/*.py", "plugins/hooks/*.py"]},
+    "package_data": {"gsh": [
+        "plugins/loaders/*.py",
+        "plugins/hooks/*.py",
+        "plugins/executors/*.py",
+    ]},
     "scripts": ["bin/gsh"],
     "description": "Pluggable Distributed SSH Command Executer.",
     # PyPi, despite not parsing markdown, will prefer the README.md to the

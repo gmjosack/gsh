@@ -15,22 +15,26 @@ class _ParamikoThread(threading.Thread):
         # and I don't want it to be required to use gsh.
         import paramiko
 
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(self.executor.hostname, password=self.executor.parent.password)
+        try:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(self.executor.hostname, password=self.executor.parent.password)
 
-        command = " ".join(self.executor.command)
-        stdin, stdout, stderr = ssh.exec_command(command)
+            command = " ".join(self.executor.command)
+            stdin, stdout, stderr = ssh.exec_command(command)
 
 
-        for line in stdout.read().splitlines():
-            self.executor.update(self.executor.hostname, "stdout", line)
+            for line in stdout.read().splitlines():
+                self.executor.update(self.executor.hostname, "stdout", line)
 
-        for line in stderr.read().splitlines():
-            self.executor.update(self.executor.hostname, "stderr", line)
+            for line in stderr.read().splitlines():
+                self.executor.update(self.executor.hostname, "stderr", line)
 
-        ssh.close()
-        self.executor.rv = stdout.channel.recv_exit_status()
+            ssh.close()
+            self.executor.rv = stdout.channel.recv_exit_status()
+        except paramiko.BadAuthenticationType, err:
+            self.executor.update(self.executor.hostname, "stderr", "GSH: Failed to login.")
+            self.executor.rv = 1
 
 
 class ParamikoExecutor(BaseExecutor):

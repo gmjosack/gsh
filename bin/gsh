@@ -5,11 +5,16 @@
 import argparse
 import logging
 import sys
+import warnings
 
 from gsh import Gsh
 from gsh import __version__
 from gsh.plugin import get_loaders, get_hooks, get_executors
 from gsh.config import Config
+
+
+
+warnings.simplefilter("ignore")
 
 
 def _create_loader_action(plugin):
