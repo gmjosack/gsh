@@ -86,18 +86,40 @@ class BaseExecutionHook(object):
 
 
 class BaseExecutor(object):
-    pass
+    """ Base Executor to be instantiated at the job level.
+
+        Your TopLevel Base Executor will define an inner class
+        called Executor, which inherits from BaseInnerExecutor,
+        which will be instantiated per host. That is where most of
+        your logic will go. This outer class is for setting up
+        attributes at the job level.
+    """
 
 class BaseInnerExecutor(object):
+    """ Executor to be instantiated per host.
 
-    def __init__(self, parent, hostname, command, timeout, update_cb):
+    Attributes:
+        parent: The outer, job-level, executor object.
+        hostname: The hostname you'll be executing on.
+        command: The command to run on the host.
+        timeout: Max time before failure.
+        update: A callback to write the output from the command.
+
+    """
+
+    def __init__(self, parent, hostname, command, timeout, update):
         self.parent = parent
         self.hostname = hostname
         self.command = command
         self.timeout = timeout
-        self.update = update_cb
+        self.update = update
 
     def run(self):
+        """ The actual execution logic goes here.
+
+            Returns:
+                An integer, the return code of the command.
+        """
         return 0
 
 
