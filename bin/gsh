@@ -155,10 +155,19 @@ def main():
     for plugin, options in args.loaders.iteritems():
         hosts.update(plugin(*options))
 
-    if not args.command or not any(args.command):
-        if hosts:
-            print "\n".join(hosts)
-        sys.exit()
+    command = args.command
+
+    if len(command) == 1 and command[0] == "-":
+        command = [sys.stdin.read()]
+
+    if not command or not any(command):
+        if not sys.stdin.isatty():
+            command = [sys.stdin.read()]
+        else:
+            if hosts:
+                print "\n".join(hosts)
+            sys.exit()
+
 
     specified_hooks = _get_specified_hooks(hooks, config.hooks)
     specified_hooks = [hook() for hook in specified_hooks]
@@ -175,7 +184,7 @@ def main():
         forklimit = 1
 
     try:
-        gsh = Gsh(hosts, args.command, fork_limit=forklimit,
+        gsh = Gsh(hosts, command, fork_limit=forklimit,
                   timeout=config.timeout, hooks=specified_hooks)
         gsh.run_async()
         sys.exit(gsh.wait())
