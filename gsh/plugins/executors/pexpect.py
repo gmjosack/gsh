@@ -48,6 +48,10 @@ class _PexpectThread(threading.Thread):
 
 class PexpectExecutor(BaseExecutor):
     def __init__(self):
+        # This import is unused but I want it to blow up
+        # at the job level if it's not found
+        import pxssh
+
         super(PexpectExecutor, self).__init__()
         self.password = getpass.getpass("Password: ")
         self.username = getpass.getuser()
