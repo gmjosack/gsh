@@ -50,5 +50,6 @@ class PrinterHook(BaseExecutionHook):
         if self.add_newline and line and line[-1] != "\n":
             line += "\n"
 
+        line = line.encode('utf-8')
         stream.write(line)
         stream.flush()
