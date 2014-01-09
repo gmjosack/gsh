@@ -199,7 +199,7 @@ def main():
     try:
         gsh = Gsh(hosts, command, fork_limit=forklimit,
                   timeout=config.timeout, hooks=specified_hooks,
-                  executor=executor)
+                  executor=executor(config.executor_args, config.executor_kwargs))
         gsh.run_async()
         sys.exit(gsh.wait())
     except KeyboardInterrupt:

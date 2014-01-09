@@ -93,7 +93,16 @@ class BaseExecutor(object):
         which will be instantiated per host. That is where most of
         your logic will go. This outer class is for setting up
         attributes at the job level.
+
+    Attributes:
+        args: list of arguments passed through.
+        kwargs: dict of keyword arguments pass through.
     """
+
+    def __init__(self, args=None, kwargs=None):
+        self.args = [] if args is None else args
+        self.kwargs = {} if kwargs is None else kwargs
+
 
 class BaseInnerExecutor(object):
     """ Executor to be instantiated per host.

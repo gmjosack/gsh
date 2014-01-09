@@ -36,6 +36,8 @@ class Config(object):
         self.plugin_dirs = set()
         self.hooks = set()
         self.executor = "ssh"
+        self.executor_args = []
+        self.executor_kwargs = {}
 
     def __repr__(self):
         return (
@@ -61,7 +63,10 @@ class Config(object):
                                            self.show_percent)
             self.concurrent = data.get("concurrent", self.concurrent)
             self.timeout = data.get("timeout", self.timeout)
-            self.executor = data.get("executor", self.executor)
+
+            (
+                self.executor, self.executor_args, self.executor_kwargs
+            ) = self._parse_executor(data.get("executor", self.executor))
 
             plugin_dirs = data.get("plugin_dirs", [])
             if isinstance(plugin_dirs, basestring):
@@ -80,6 +85,30 @@ class Config(object):
             raise ConfigError(
                 "Invalid Configuration (%s): %s" % (config, err.problem))
 
+    def _parse_executor(self, executor):
+        """ Parses an executor string of the form ssh:arg1,arg2,kwarg1=foo. """
+
+        arguments = ""
+        args = []
+        kwargs = {}
+
+        if ":" in executor:
+            executor, arguments = executor.split(":", 1)
+
+        for argument in arguments.split(","):
+            argument = argument.strip()
+
+            if "=" in argument:
+                key, value = argument.split("=", 1)
+                key = key.strip()
+                value = value.strip()
+                kwargs[key] = value
+            else:
+                args.append(argument)
+
+        return executor, args, kwargs
+
+
     def update_from_args(self, args):
         """ Update config object from an argparse args object."""
 
@@ -97,7 +126,9 @@ class Config(object):
         if getattr(args, "timeout", None) is not None:
             self.timeout = args.timeout
         if getattr(args, "executor", None) is not None:
-            self.executor = args.executor
+            (
+                self.executor, self.executor_args, self.executor_kwargs
+            ) = self._parse_executor(args.executor)
 
     def load_default_files(self):
         """ Update config object from standard config file locations."""

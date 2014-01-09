@@ -17,6 +17,10 @@ class RemotePopen(object):
         self.hostname = hostname
         self.command = command
         self.timeout = timeout
+
+        if executor is None:
+            executor = get_executors().SshExecutor()
+
         self.executor = executor.Executor(
             executor, self.hostname, self.command, self.timeout,
             self._run_update_host_hooks
@@ -73,9 +77,9 @@ class Gsh(object):
         self.fork_limit = self._build_fork_limit(fork_limit, len(self.hosts))
         self.timeout = timeout
 
+        self.executor = executor
         if executor is None:
-            executor = get_executors().SshExecutor
-        self.executor = executor()
+            self.executor = get_executors().SshExecutor()
 
         # Treat 0 second timeouts as no timeout.
         if not timeout:
