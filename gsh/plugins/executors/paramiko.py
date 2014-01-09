@@ -1,6 +1,11 @@
+import cStringIO
 import getpass
 import gevent
+import select
+import socket
+import termios
 import threading
+import tty
 
 from gsh.plugin import BaseExecutor, BaseInnerExecutor
 
@@ -9,6 +14,35 @@ class _ParamikoThread(threading.Thread):
     def __init__(self, executor):
         self.executor = executor
         super(_ParamikoThread, self).__init__()
+
+    def interactive(self, ssh, command):
+        stdout = cStringIO.StringIO()
+        stderr = cStringIO.StringIO()
+        chan = ssh.invoke_shell()
+        ssh.get_transport()
+
+        for cmd in command.split("\n"):
+            cmd = cmd.strip()
+            if not cmd:
+                continue
+            chan.send(cmd + "\n")
+
+        while True:
+            read, write, error = select.select([chan], [], [])
+            if chan in read:
+                try:
+                    out = chan.recv(1024)
+                    if not out:
+                        break
+                    stdout.write(out)
+                except socket.timeout():
+                    pass
+
+        chan.close()
+        stdout.seek(0)
+        stderr.seek(0)
+        return stdout, stderr
+
 
     def run(self):
         # Defer import since most people won't want to use this executor
@@ -21,8 +55,13 @@ class _ParamikoThread(threading.Thread):
             ssh.connect(self.executor.hostname, password=self.executor.parent.password)
 
             command = " ".join(self.executor.command)
-            stdin, stdout, stderr = ssh.exec_command(command)
 
+            if "interactive" in self.executor.parent.args:
+                stdout, stderr = self.interactive(ssh, command)
+                rv = 0  # Find a way to get rv later.
+            else:
+                stdin, stdout, stderr = ssh.exec_command(command)
+                rv = stdout.channel.recv_exit_status()
 
             for line in stdout.read().splitlines():
                 self.executor.update(self.executor.hostname, "stdout", line)
@@ -31,7 +70,7 @@ class _ParamikoThread(threading.Thread):
                 self.executor.update(self.executor.hostname, "stderr", line)
 
             ssh.close()
-            self.executor.rv = stdout.channel.recv_exit_status()
+            self.executor.rv = rv
         except paramiko.BadAuthenticationType, err:
             self.executor.update(self.executor.hostname, "stderr", "GSH: Failed to login.")
             self.executor.rv = 1
