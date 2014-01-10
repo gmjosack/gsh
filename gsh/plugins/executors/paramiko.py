@@ -19,7 +19,6 @@ class _ParamikoThread(threading.Thread):
         stdout = cStringIO.StringIO()
         stderr = cStringIO.StringIO()
         chan = ssh.invoke_shell()
-        ssh.get_transport()
 
         for cmd in command.split("\n"):
             cmd = cmd.strip()
@@ -28,14 +27,19 @@ class _ParamikoThread(threading.Thread):
             chan.send(cmd + "\n")
 
         while True:
-            read, write, error = select.select([chan], [], [])
+            read, write, error = select.select([chan], [], [], 5)
+
+            if not any([read, write, error]):
+                output += "GSH: Channel Timed Out!"
+                break
+
             if chan in read:
                 try:
                     out = chan.recv(1024)
                     if not out:
                         break
                     stdout.write(out)
-                except socket.timeout():
+                except socket.timeout:
                     pass
 
         chan.close()
@@ -52,7 +56,13 @@ class _ParamikoThread(threading.Thread):
         try:
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(self.executor.hostname, password=self.executor.parent.password)
+
+            try:
+                ssh.connect(self.executor.hostname, password=self.executor.parent.password, timeout=5)
+            except socket.timeout, err:
+                self.executor.update(self.executor.hostname, "stderr", "GSH: Connection timeout: %s" % err)
+                self.executor.rv = 1
+                return
 
             command = " ".join(self.executor.command)
 
