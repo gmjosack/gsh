@@ -18,6 +18,7 @@ class Config(object):
     Attributes:
         forklimit: The number of concurrent processes to fork at a time.
         print_machines: Whether to prefix output with machine names.
+        print_output: Whether to print output from the executed commands.
         show_percent: Whether to prefix output with percentage of completion.
         concurrent: Whether to perform operation sequentially vs concurrently.
         timeout: How long to wait for a command to finish on a host.
@@ -30,6 +31,7 @@ class Config(object):
     def __init__(self):
         self.forklimit = 64
         self.print_machines = True
+        self.print_output = True
         self.show_percent = False
         self.concurrent = True
         self.timeout = 0
@@ -41,10 +43,10 @@ class Config(object):
 
     def __repr__(self):
         return (
-            "Config(forklimit=%r, print_machines=%r, show_percent=%r, "
+            "Config(forklimit=%r, print_machines=%r, print_output=%r, show_percent=%r, "
             "concurrent=%r, timeout=%r, plugin_dirs=%r, hooks=%r, executor=%r)"
         ) % (
-            self.forklimit, self.print_machines, self.show_percent,
+            self.forklimit, self.print_machines, self.print_output, self.show_percent,
             self.concurrent, self.timeout, self.plugin_dirs, self.hooks, self.executor,
         )
 
@@ -57,26 +59,20 @@ class Config(object):
                     data = {}
 
             self.forklimit = data.get("forklimit", self.forklimit)
-            self.print_machines = data.get("print_machines",
-                                           self.print_machines)
-            self.show_percent = data.get("show_percent",
-                                           self.show_percent)
+            self.print_machines = data.get("print_machines", self.print_machines)
+            self.print_output = data.get("print_output", self.print_output)
+            self.show_percent = data.get("show_percent", self.show_percent)
             self.concurrent = data.get("concurrent", self.concurrent)
             self.timeout = data.get("timeout", self.timeout)
 
-            (
-                self.executor, self.executor_args, self.executor_kwargs
-            ) = self._parse_executor(data.get("executor", self.executor))
+            self._parse_executor(data.get("executor", self.executor))
 
             plugin_dirs = data.get("plugin_dirs", [])
             if isinstance(plugin_dirs, basestring):
                 plugin_dirs = [plugin_dirs]
             self.plugin_dirs.update(plugin_dirs)
 
-            hooks = data.get("hooks", [])
-            if isinstance(hooks, basestring):
-                hooks = [hooks]
-            self.hooks.update(hooks)
+            self._parse_hooks(data.get("hooks", []))
 
         # It's okay to ignore files that don't exist.
         except IOError:
@@ -106,19 +102,38 @@ class Config(object):
             else:
                 args.append(argument)
 
-        return executor, args, kwargs
+        self.executor, self.executor_args, self.executor_kwargs = executor, args, kwargs
+
+
+    def _parse_hooks(self, hooks):
+        if isinstance(hooks, basestring):
+            hooks = [hooks]
+
+        hooks = set([subhook for hook in hooks for subhook in hook.split(",")])
+
+        for hook in hooks:
+            hook = hook.strip()
+            if not hook:
+                continue
+            if hook[0] == "-":
+                if hook[1:] in self.hooks:
+                    self.hooks.remove(hook[1:])
+            else:
+                self.hooks.add(hook)
 
 
     def update_from_args(self, args):
         """ Update config object from an argparse args object."""
 
         self.plugin_dirs.update(args.plugin_dirs)
-        self.hooks.update(getattr(args, "hooks", []))
+        self._parse_hooks(getattr(args, "hooks", []))
 
         if getattr(args, "forklimit", None) is not None:
             self.forklimit = args.forklimit
         if getattr(args, "print_machines", None) is not None:
             self.print_machines = args.print_machines
+        if getattr(args, "print_output", None) is not None:
+            self.print_output = args.print_output
         if getattr(args, "show_percent", None) is not None:
             self.show_percent = args.show_percent
         if getattr(args, "concurrent", None) is not None:
@@ -126,9 +141,7 @@ class Config(object):
         if getattr(args, "timeout", None) is not None:
             self.timeout = args.timeout
         if getattr(args, "executor", None) is not None:
-            (
-                self.executor, self.executor_args, self.executor_kwargs
-            ) = self._parse_executor(args.executor)
+            self._parse_executor(args.executor)
 
     def load_default_files(self):
         """ Update config object from standard config file locations."""

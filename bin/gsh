@@ -7,11 +7,12 @@ import logging
 import sys
 import warnings
 
+from argparse import RawDescriptionHelpFormatter
+
 from gsh import Gsh
 from gsh import __version__
 from gsh.plugin import get_loaders, get_hooks, get_executors
 from gsh.config import Config
-
 
 
 warnings.simplefilter("ignore")
@@ -31,7 +32,7 @@ def _create_loader_action(plugin):
 
 def _setup_loader_options(parser, plugins):
     """ Dynamically add options based on what loaders exist."""
-    loader_group = parser.add_argument_group("loaders")
+    loader_group = parser.add_argument_group("Loaders")
     for plugin in plugins:
         args = []
 
@@ -87,7 +88,8 @@ def main():
     config.load_default_files()
 
     description_msg = "Run a command across many machines."
-    parser = argparse.ArgumentParser(description=description_msg, add_help=False)
+    parser = argparse.ArgumentParser(description=description_msg, add_help=False,
+                                     formatter_class=RawDescriptionHelpFormatter)
 
     # Do a first pass of parsing where we ignore unknown options so that we can
     # make use of options which will discover plugins and potentially load more
@@ -113,6 +115,12 @@ def main():
                         action="store_false", default=None,
                         help="Do not prepend hostname to output.")
 
+    parser.add_argument("-P", "--print-output", dest="print_output",
+                        action="store_true", default=None,
+                        help="Print output from the commands executed.")
+    parser.add_argument("-N", "--no-print-output", dest="print_output",
+                        action="store_false", default=None,
+                        help="Don't print output from the commands executed.")
 
     parser.add_argument("--show-percent", dest="show_percent",
                         action="store_true", default=None,
@@ -140,16 +148,31 @@ def main():
     _setup_loader_options(parser, get_loaders(config.plugin_dirs))
 
     hooks = get_hooks(config.plugin_dirs)
-    parser.add_argument("--hooks", default=[], action="append",
-                        help=("Hooks to execute during run-time. Available hooks: %s" %
-                              ", ".join([_plugin_to_arg(hook, "Hook") for hook in hooks])
-                        ))
+    avail_hooks = ", ".join([_plugin_to_arg(hook, "Hook") for hook in hooks if hook.show_cli])
+    hooks_group = parser.add_argument_group("Hooks", description=(
+        "Loaded Hooks: %s\n"
+        "Available Hooks: %s\n"
+        % (", ".join(config.hooks), avail_hooks)
+    ))
+    hooks_group.add_argument("--hooks", default=[], action="append",
+                             help="Hooks to execute during run-time.")
 
     executors = get_executors(config.plugin_dirs)
-    parser.add_argument("-e", "--executor", default=None,
-                        help=("Which execution plugin to use: Available executors: %s" %
-                              ", ".join([_plugin_to_arg(executor, "Executor") for executor in executors])
-                        ))
+    avail_executors = ", ".join([_plugin_to_arg(executor, "Executor") for executor in executors])
+    executors_group = parser.add_argument_group("Executors", description=(
+        "Executors behave as the layer for doing backend execution.\n"
+        "Currently only the ssh executor is fully support, though other\n"
+        "experimental executors exist, specifically for working with\n"
+        "password-based and interactive shells. This executors will change\n"
+        "often.\n\n"
+        "Executor's can be passed positional and keyword arguments via\n"
+        "the command line using the syntax: executor:arg1,arg2,kwarg1=foo\n\n"
+        "Loaded Executor: %s\n"
+        "Available Executors: %s"
+        % (config.executor, avail_executors)
+    ))
+    executors_group.add_argument("-e", "--executor", default=None,
+                                 help="Which execution plugin to use.")
 
     args = parser.parse_args()
     config.update_from_args(args)
@@ -188,7 +211,8 @@ def main():
         "show_percent": config.show_percent,
     }
 
-    specified_hooks.append(hooks.PrinterHook(**printer_config))
+    if config.print_output:
+        specified_hooks.append(hooks.PrinterHook(**printer_config))
 
     forklimit = config.forklimit
     if not config.concurrent:

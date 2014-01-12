@@ -42,6 +42,8 @@ class BaseExecutionHook(object):
         which they will be run.
     """
 
+    show_cli = True
+
     def pre_job(self, command, hosts, timestamp):
         """ Called first before any commands are executed.
 

@@ -2,6 +2,9 @@ from gsh.plugin import BaseExecutionHook
 
 class BufferedOutputHook(BaseExecutionHook):
     """ Hook to capture output from a RemotePopen call."""
+
+    show_cli = False
+
     def __init__(self):
         self.stdout = []
         self.stderr = []
@@ -18,6 +21,9 @@ class BufferedOutputHook(BaseExecutionHook):
 
 class MultiBufferedOutputHook(BaseExecutionHook):
     """ Hook to gather output from all hosts on a Gsh call."""
+
+    show_cli = False
+
     def __init__(self):
         self.hosts = {}
 

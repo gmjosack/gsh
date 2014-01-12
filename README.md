@@ -43,11 +43,13 @@ look like:
 ```yaml
 forklimit: 64
 print_machines: true
+print_output: true
 show_percent: false
 concurrent: true
 timeout: null
 plugin_dirs: []
 hooks: []
+executor: "ssh"
 ```
 
 Configuration files are read from the following locations, being overridden
@@ -137,6 +139,21 @@ _BaseExecutionHook_ in _gsh.plugin_, as well as the builtin plugins located in
 _gsh/plugins/hooks_ in the package itself, are the best way to go about
 learning how to add new hooks.
 
+##### Executors
+
+Executors allow you to change out how your commands are executed. The default
+execution system is to send your command over ssh, which should be sufficient
+for most people.
+
+Executors were added to support logging into machines with a password or for
+certain network devices which require commands to be sent over an interactive
+shell.
+
+As with loaders, they should be stored in a specified plugin_dirs location or
+the default location of _/etc/gsh/plugins/executors_. The base class,
+_BaseExecutor_ in _gsh.plugin_, as well as the builtin plugins located in
+_gsh/plugins/executors_ in the package itself, are the best way to go about
+learning how to add new executors.
 
 ### Rationale
 

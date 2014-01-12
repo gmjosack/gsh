@@ -49,11 +49,13 @@ like:
 
     forklimit: 64
     print_machines: true
+    print_output: true
     show_percent: false
     concurrent: true
     timeout: null
     plugin_dirs: []
     hooks: []
+    executor: "ssh"
 
 Configuration files are read from the following locations, being
 overridden in the order they are read:
@@ -142,6 +144,23 @@ location or the default location of */etc/gsh/plugins/hooks*. The base
 class, *BaseExecutionHook* in *gsh.plugin*, as well as the builtin
 plugins located in *gsh/plugins/hooks* in the package itself, are the
 best way to go about learning how to add new hooks.
+
+Executors
+'''''''''
+
+Executors allow you to change out how your commands are executed. The
+default execution system is to send your command over ssh, which should
+be sufficient for most people.
+
+Executors were added to support logging into machines with a password or
+for certain network devices which require commands to be sent over an
+interactive shell.
+
+As with loaders, they should be stored in a specified plugin\_dirs
+location or the default location of */etc/gsh/plugins/executors*. The
+base class, *BaseExecutor* in *gsh.plugin*, as well as the builtin
+plugins located in *gsh/plugins/executors* in the package itself, are
+the best way to go about learning how to add new executors.
 
 Rationale
 ~~~~~~~~~
