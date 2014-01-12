@@ -9,3 +9,6 @@ class ConfigError(Error):
 
 class LoaderError(Error):
     """ Error loading hosts from loader plugin."""
+
+class EarlyExit(Error):
+    """ Used to bail out of hooks during the pre_job stage."""

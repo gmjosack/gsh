@@ -141,7 +141,7 @@ def get_loaders(additional_dirs=None):
     return annex.Annex(BaseHostLoader, [
         os.path.join(BUILTIN_PLUGIN_DIR, "loaders"),
         "/etc/gsh/plugins/loaders",
-        [os.path.join(plugin_dir, "loaders") for plugin_dir in additional_dirs]
+        [os.path.expanduser(os.path.join(plugin_dir, "loaders")) for plugin_dir in additional_dirs]
     ])
 
 
@@ -152,7 +152,7 @@ def get_hooks(additional_dirs=None):
     return annex.Annex(BaseExecutionHook, [
         os.path.join(BUILTIN_PLUGIN_DIR, "hooks"),
         "/etc/gsh/plugins/hooks",
-        [os.path.join(plugin_dir, "hooks") for plugin_dir in additional_dirs]
+        [os.path.expanduser(os.path.join(plugin_dir, "hooks")) for plugin_dir in additional_dirs]
     ], instantiate=False)
 
 
@@ -163,5 +163,5 @@ def get_executors(additional_dirs=None):
     return annex.Annex(BaseExecutor, [
         os.path.join(BUILTIN_PLUGIN_DIR, "executors"),
         "/etc/gsh/plugins/executors",
-        [os.path.join(plugin_dir, "executors") for plugin_dir in additional_dirs]
+        [os.path.expanduser(os.path.join(plugin_dir, "executors")) for plugin_dir in additional_dirs]
     ], instantiate=False)

@@ -4,6 +4,7 @@ from gevent.pool import Pool
 import time
 
 from .plugin import get_executors
+from .exceptions import EarlyExit
 
 
 class RemotePopen(object):
@@ -96,6 +97,8 @@ class Gsh(object):
         self._pre_job_hooks = None
         self._post_job_hooks = None
 
+        self._continue = True
+
     @staticmethod
     def _build_fork_limit(fork_limit, num_hosts):
         if isinstance(fork_limit, int) or fork_limit.isdigit():
@@ -111,18 +114,22 @@ class Gsh(object):
         self._pre_job_hooks = gevent.spawn(self._run_pre_job_hooks)
         self._pre_job_hooks.join()
 
-        for host in self.hosts:
-            remote_command = RemotePopen(
-                host, self.command, hooks=self.hooks,
-                timeout=self.timeout, executor=self.executor)
-            self._remotes.append(remote_command)
-            self._greenlets.append(self._pool.apply_async(remote_command.run))
+        if self._continue:
+            for host in self.hosts:
+                remote_command = RemotePopen(
+                    host, self.command, hooks=self.hooks,
+                    timeout=self.timeout, executor=self.executor)
+                self._remotes.append(remote_command)
+                self._greenlets.append(self._pool.apply_async(remote_command.run))
 
         self._post_job_hooks = gevent.spawn(self._run_post_job_hooks)
 
     def _run_pre_job_hooks(self):
         for hook in self.hooks:
-            hook.pre_job(self.command, self.hosts, time.time())
+            try:
+                hook.pre_job(self.command, self.hosts, time.time())
+            except EarlyExit:
+                self._continue = False
 
     def _run_post_job_hooks(self):
         # Wait for all greenlets to finish before running these hooks.

@@ -148,7 +148,7 @@ def main():
     _setup_loader_options(parser, get_loaders(config.plugin_dirs))
 
     hooks = get_hooks(config.plugin_dirs)
-    avail_hooks = ", ".join([_plugin_to_arg(hook, "Hook") for hook in hooks if hook.show_cli])
+    avail_hooks = ", ".join(set([_plugin_to_arg(hook, "Hook") for hook in hooks if hook.show_cli]))
     hooks_group = parser.add_argument_group("Hooks", description=(
         "Loaded Hooks: %s\n"
         "Available Hooks: %s\n"
@@ -158,7 +158,7 @@ def main():
                              help="Hooks to execute during run-time.")
 
     executors = get_executors(config.plugin_dirs)
-    avail_executors = ", ".join([_plugin_to_arg(executor, "Executor") for executor in executors])
+    avail_executors = ", ".join(set([_plugin_to_arg(executor, "Executor") for executor in executors]))
     executors_group = parser.add_argument_group("Executors", description=(
         "Executors behave as the layer for doing backend execution.\n"
         "Currently only the ssh executor is fully support, though other\n"
