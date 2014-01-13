@@ -44,7 +44,8 @@ def _setup_loader_options(parser, plugins):
         if args and plugin.opt_help and isinstance(plugin.opt_help, basestring):
             loader_group.add_argument(
                 *args, default={}, dest="loaders", metavar=plugin.opt_metavar,
-                action=_create_loader_action(plugin), help=plugin.opt_help)
+                action=_create_loader_action(plugin), nargs=plugin.opt_nargs,
+                help=plugin.opt_help)
 
 
 def _get_specified_hooks(plugins, specified_hooks):

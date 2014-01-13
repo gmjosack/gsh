@@ -21,6 +21,7 @@ class BaseHostLoader(object):
     opt_long = None
     opt_metavar = "FOO"
     opt_help = None
+    opt_nargs = None
 
     def __call__(self, *args):
         """ Method called to retreive a list of hosts.
