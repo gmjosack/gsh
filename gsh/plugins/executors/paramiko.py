@@ -30,7 +30,7 @@ class _ParamikoThread(threading.Thread):
             read, write, error = select.select([chan], [], [], 5)
 
             if not any([read, write, error]):
-                output += "GSH: Channel Timed Out!"
+                stderr.write("GSH: Channel Timed Out!\n")
                 break
 
             if chan in read:
@@ -94,7 +94,10 @@ class ParamikoExecutor(BaseExecutor):
         import paramiko
 
         super(ParamikoExecutor, self).__init__(args, kwargs)
-        self.password = getpass.getpass("Password: ")
+        if "password" in kwargs:
+            self.password = kwargs["password"]
+        else:
+            self.password = getpass.getpass("Password: ")
         self.username = getpass.getuser()
 
     class Executor(BaseInnerExecutor):
