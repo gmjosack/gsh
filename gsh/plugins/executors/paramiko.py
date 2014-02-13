@@ -6,6 +6,7 @@ import socket
 import termios
 import threading
 import tty
+import time
 
 from gsh.plugin import BaseExecutor, BaseInnerExecutor
 
@@ -20,10 +21,13 @@ class _ParamikoThread(threading.Thread):
         stderr = cStringIO.StringIO()
         chan = ssh.invoke_shell()
 
+        time.sleep(self.executor.parent.initial_sleep)
+
         for cmd in command.split("\n"):
             cmd = cmd.strip()
             if not cmd:
                 continue
+            time.sleep(self.executor.parent.cmd_sleep)
             chan.send(cmd + "\n")
 
         while True:
@@ -42,7 +46,10 @@ class _ParamikoThread(threading.Thread):
                 except socket.timeout:
                     pass
 
-        chan.close()
+        try:
+            chan.close()
+        except EOFError:
+            pass
         stdout.seek(0)
         stderr.seek(0)
         return stdout, stderr
@@ -53,37 +60,58 @@ class _ParamikoThread(threading.Thread):
         # and I don't want it to be required to use gsh.
         import paramiko
 
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        connect_opts = {
+            "timeout": self.executor.parent.timeout,
+        }
+
+        if self.executor.parent.password:
+            connect_opts.update({
+                "password": self.executor.parent.password,
+                "look_for_keys": False,
+                "allow_agent": False,
+            })
+
         try:
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(self.executor.hostname, **connect_opts)
+        except socket.timeout, err:
+            self.executor.update(self.executor.hostname, "stderr", "GSH: Connection timeout: %s" % err)
+            self.executor.rv = 1
+            return
+        except paramiko.ssh_exception.SSHException, err:
+            self.executor.update(self.executor.hostname, "stderr", "GSH: SSHException: %s" % err)
+            self.executor.rv = 1
+            return
+        except paramiko.BadAuthenticationType, err:
+            self.executor.update(self.executor.hostname, "stderr", "GSH: Failed to login.")
+            self.executor.rv = 1
+            return
 
-            try:
-                ssh.connect(self.executor.hostname, password=self.executor.parent.password, timeout=5)
-            except socket.timeout, err:
-                self.executor.update(self.executor.hostname, "stderr", "GSH: Connection timeout: %s" % err)
-                self.executor.rv = 1
-                return
 
-            command = " ".join(self.executor.command)
+        command = " ".join(self.executor.command)
 
+        try:
             if "interactive" in self.executor.parent.args:
                 stdout, stderr = self.interactive(ssh, command)
                 rv = 0  # Find a way to get rv later.
             else:
                 stdin, stdout, stderr = ssh.exec_command(command)
                 rv = stdout.channel.recv_exit_status()
-
-            for line in stdout.read().splitlines():
-                self.executor.update(self.executor.hostname, "stdout", line)
-
-            for line in stderr.read().splitlines():
-                self.executor.update(self.executor.hostname, "stderr", line)
-
-            ssh.close()
-            self.executor.rv = rv
-        except paramiko.BadAuthenticationType, err:
-            self.executor.update(self.executor.hostname, "stderr", "GSH: Failed to login.")
+        except paramiko.ssh_exception.SSHException, err:
+            self.executor.update(self.executor.hostname, "stderr", "GSH: SSHException: %s" % err)
             self.executor.rv = 1
+            return
+
+        for line in stdout.read().splitlines():
+            self.executor.update(self.executor.hostname, "stdout", line)
+
+        for line in stderr.read().splitlines():
+            self.executor.update(self.executor.hostname, "stderr", line)
+
+        ssh.close()
+        self.executor.rv = rv
 
 
 class ParamikoExecutor(BaseExecutor):
@@ -94,11 +122,15 @@ class ParamikoExecutor(BaseExecutor):
         import paramiko
 
         super(ParamikoExecutor, self).__init__(args, kwargs)
-        if "password" in kwargs:
-            self.password = kwargs["password"]
-        else:
+        self.username = kwargs.get("username", getpass.getuser())
+        self.password = kwargs.get("password", "")
+        self.timeout = float(kwargs.get("timeout", 5))
+        self.initial_sleep = float(kwargs.get("inital_sleep", 0))
+        self.cmd_sleep = float(kwargs.get("cmd_sleep", .2))
+
+        if not self.password and "password" in args:
             self.password = getpass.getpass("Password: ")
-        self.username = getpass.getuser()
+
 
     class Executor(BaseInnerExecutor):
         def __init__(self, *args, **kwargs):

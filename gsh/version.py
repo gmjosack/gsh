@@ -6,4 +6,4 @@ places. Because of this, this file should remain empty other than the
 __version__ itself.
 """
 
-__version__ = "0.11.3"
+__version__ = "0.11.4"
