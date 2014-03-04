@@ -32,7 +32,7 @@ class SshExecutor(BaseExecutor):
 
         def run(self):
             _proc = Popen(
-                ["ssh", "-o", "PasswordAuthentication=no", self.hostname] + self.command,
+                ["ssh", "-no", "PasswordAuthentication=no", self.hostname] + self.command,
                 stdout=PIPE, stderr=PIPE
             )
 

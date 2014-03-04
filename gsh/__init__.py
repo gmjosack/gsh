@@ -1,3 +1,6 @@
+import warnings
+warnings.simplefilter("ignore")
+
 from .core import RemotePopen, Gsh
 from .version import __version__
 
