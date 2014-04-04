@@ -69,6 +69,7 @@ class _ParamikoThread(threading.Thread):
 
         if self.executor.parent.password:
             connect_opts.update({
+                "username": self.executor.parent.username,
                 "password": self.executor.parent.password,
                 "look_for_keys": False,
                 "allow_agent": False,
