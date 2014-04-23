@@ -135,6 +135,11 @@ def main():
                         action="store_false", default=None,
                         help="Force sequentially execution.")
 
+    # Not supporting backwards compatibility with -o because of the
+    # complication it adds to argument parsing.
+    parser.add_argument("--remoteshellopt", action="append", default=[],
+                        help="Pass options to SSH (SSHExecutor Only).")
+
     parser.add_argument("-V", "--version", action="store_true", default=False,
                         help="Display version information.")
 

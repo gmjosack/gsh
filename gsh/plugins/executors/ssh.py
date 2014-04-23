@@ -5,6 +5,10 @@ from gevent_subprocess import Popen, PIPE
 from gsh.plugin import BaseExecutor, BaseInnerExecutor
 
 class SshExecutor(BaseExecutor):
+    def __init__(self, args, kwargs):
+        self.ssh_opts = kwargs.get("ssh_opts", [])
+        super(SshExecutor, self).__init__(args, kwargs)
+
     class Executor(BaseInnerExecutor):
         def __init__(self, *args, **kwargs):
             self.names = {}
@@ -32,7 +36,7 @@ class SshExecutor(BaseExecutor):
 
         def run(self):
             _proc = Popen(
-                ["ssh", "-no", "PasswordAuthentication=no", self.hostname] + self.command,
+                ["ssh", "-no", "PasswordAuthentication=no"] + self.parent.ssh_opts + [self.hostname] + self.command,
                 stdout=PIPE, stderr=PIPE
             )
 

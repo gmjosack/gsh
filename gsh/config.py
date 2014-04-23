@@ -142,6 +142,8 @@ class Config(object):
             self.timeout = args.timeout
         if getattr(args, "executor", None) is not None:
             self._parse_executor(args.executor)
+        if getattr(args, "remoteshellopt", None) is not None:
+            self.executor_kwargs["ssh_opts"] = args.remoteshellopt
 
     def load_default_files(self):
         """ Update config object from standard config file locations."""
