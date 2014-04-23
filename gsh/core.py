@@ -20,7 +20,7 @@ class RemotePopen(object):
         self.timeout = timeout
 
         if executor is None:
-            executor = get_executors().SshExecutor()
+            executor = get_executors().SshExecutor([], {})
 
         self.executor = executor.Executor(
             executor, self.hostname, self.command, self.timeout,
@@ -80,7 +80,7 @@ class Gsh(object):
 
         self.executor = executor
         if executor is None:
-            self.executor = get_executors().SshExecutor()
+            self.executor = get_executors().SshExecutor([], {})
 
         # Treat 0 second timeouts as no timeout.
         if not timeout:
