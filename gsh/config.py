@@ -104,7 +104,6 @@ class Config(object):
 
         self.executor, self.executor_args, self.executor_kwargs = executor, args, kwargs
 
-
     def _parse_hooks(self, hooks):
         if isinstance(hooks, basestring):
             hooks = [hooks]
@@ -120,7 +119,6 @@ class Config(object):
                     self.hooks.remove(hook[1:])
             else:
                 self.hooks.add(hook)
-
 
     def update_from_args(self, args):
         """ Update config object from an argparse args object."""
@@ -142,7 +140,7 @@ class Config(object):
             self.timeout = args.timeout
         if getattr(args, "executor", None) is not None:
             self._parse_executor(args.executor)
-        if getattr(args, "remoteshellopt", None) is not None:
+        if getattr(args, "remoteshellopt", []):
             self.executor_kwargs["ssh_opts"] = args.remoteshellopt
 
     def load_default_files(self):
