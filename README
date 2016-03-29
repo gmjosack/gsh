@@ -23,6 +23,9 @@ easy as:
 
     pip install gsh
 
+On Debian/Ubuntu systems you will need the "python-dev" and "libevent-dev"
+packages installed.
+
 Examples
 ~~~~~~~~
 
