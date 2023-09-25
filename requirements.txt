@@ -1,5 +1,5 @@
 PyYAML
 annex==0.2
-gevent==0.13.8
+gevent==23.9.1
 gevent-subprocess==0.1.2
 greenlet==0.4.1
